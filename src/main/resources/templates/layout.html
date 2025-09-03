@@ -45,6 +45,16 @@
         </div>
     </div>
 
+    <!-- CodeMirror 6 Scripts -->
+    <script type="module">
+        import { EditorView, basicSetup } from "https://deno.land/x/codemirror_esm@v6.0.1/esm/codemirror/dist/index.js";
+        import { xml } from "https://deno.land/x/codemirror_esm@v6.0.1/esm/lang-xml/dist/index.js";
+        import { EditorState } from "https://deno.land/x/codemirror_esm@v6.0.1/esm/state/dist/index.js";
+        
+        // Make CodeMirror available globally
+        window.CodeMirror = { EditorView, basicSetup, xml, EditorState };
+    </script>
+
     <!-- Common Scripts -->
     <div th:replace="~{fragments/scripts :: common(${includeJsonEditor})}"></div>
 </body>

@@ -50,9 +50,8 @@
                 <!-- Mode 2: Text Area -->
                 <div class="mb-3" id="textInputSection" style="display: none;">
                     <label for="textContent" class="form-label">XML Content</label>
-                    <textarea class="form-control" id="textContent" name="textContent" rows="8" 
-                              placeholder="Enter XML data:&#10;&lt;bookings&gt;&#10;&lt;booking&gt;&lt;customerName&gt;John Smith&lt;/customerName&gt;&lt;amount&gt;250.75&lt;/amount&gt;&lt;/booking&gt;&#10;&lt;booking&gt;&lt;customerName&gt;Jane Doe&lt;/customerName&gt;&lt;amount&gt;189.50&lt;/amount&gt;&lt;/booking&gt;&#10;&lt;/bookings&gt;"
-                              th:text="${preservedTextContent}"></textarea>
+                    <div id="textContent"></div>
+                    <input type="hidden" id="textContentValue" name="textContent" th:value="${preservedTextContent}">
                 </div>
 
                 <!-- Mode 3: Predefined Files -->
@@ -191,7 +190,26 @@
         
         <!-- Input Mode Switching Script -->
         <script>
+            let codeMirrorEditor = null;
+            
             document.addEventListener('DOMContentLoaded', function() {
+                // Initialize CodeMirror
+                if (window.CodeMirror) {
+                    const { EditorView, basicSetup, xml, EditorState } = window.CodeMirror;
+                    const initialValue = document.getElementById('textContentValue').value || 
+                        `<bookings>
+<booking><customerName>John Smith</customerName><amount>250.75</amount></booking>
+<booking><customerName>Jane Doe</customerName><amount>189.50</amount></booking>
+</bookings>`;
+                    
+                    codeMirrorEditor = new EditorView({
+                        state: EditorState.create({
+                            doc: initialValue,
+                            extensions: [basicSetup, xml()]
+                        }),
+                        parent: document.getElementById('textContent')
+                    });
+                }
                 const inputModeRadios = document.querySelectorAll('input[name="inputMode"]');
                 const fileUploadSection = document.getElementById('fileUploadSection');
                 const textInputSection = document.getElementById('textInputSection');
@@ -241,6 +259,12 @@
                     let isValid = true;
                     let errorMessage = '';
                     
+                    // Sync CodeMirror content to hidden input before validation
+                    if (selectedMode === 'text' && codeMirrorEditor) {
+                        const content = codeMirrorEditor.state.doc.toString();
+                        document.getElementById('textContentValue').value = content;
+                    }
+                    
                     switch(selectedMode) {
                         case 'file':
                             const fileInput = document.getElementById('file');
@@ -252,15 +276,17 @@
                             break;
                             
                         case 'text':
-                            const textContent = document.getElementById('textContent');
-                            if (!textContent.value.trim()) {
+                            const textContentValue = codeMirrorEditor ? 
+                                codeMirrorEditor.state.doc.toString() : 
+                                document.getElementById('textContentValue').value;
+                            if (!textContentValue.trim()) {
                                 isValid = false;
                                 errorMessage = 'Please enter XML content.';
-                                showFieldError(textContent, errorMessage);
-                            } else if (!validateXMLFormat(textContent.value)) {
+                                showFieldError(document.getElementById('textContent'), errorMessage);
+                            } else if (!validateXMLFormat(textContentValue)) {
                                 isValid = false;
                                 errorMessage = 'Please enter valid XML format with bookings structure.';
-                                showFieldError(textContent, errorMessage);
+                                showFieldError(document.getElementById('textContent'), errorMessage);
                             }
                             break;
                             

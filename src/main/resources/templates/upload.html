@@ -71,9 +71,11 @@
                                 <label for="predefinedFile" class="form-label">Select Sample Data</label>
                                 <select class="form-select" id="predefinedFile" name="predefinedFile">
                                     <option value="">Choose a sample file...</option>
-                                    <option value="customers-type-a.csv" th:selected="${selectedPredefinedFile == 'customers-type-a.csv'}">Customer Data Type A (10 records)</option>
-                                    <option value="bookings-sample.csv" th:selected="${selectedPredefinedFile == 'bookings-sample.csv'}">Booking Sample Data (10 records)</option>
-                                    <option value="demo-data.csv" th:selected="${selectedPredefinedFile == 'demo-data.csv'}">Demo Dataset (10 records)</option>
+                                    <option th:each="file : ${predefinedFiles}" 
+                                            th:value="${file.filename}" 
+                                            th:selected="${selectedPredefinedFile == file.filename}"
+                                            th:text="${file.displayName + ' (' + file.recordCount + ' records)'}">
+                                    </option>
                                 </select>
                                 <div class="form-text">Select from predefined sample data files.</div>
                             </div>

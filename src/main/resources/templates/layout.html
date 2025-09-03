@@ -13,7 +13,15 @@
     <div th:replace="~{fragments/navigation :: navbar(${activePage})}"></div>
     
     <div class="container-fluid mt-4">
-        <div class="row">
+        <!-- Full-width layout for logs page -->
+        <div th:if="${activePage == 'logs'}" class="row">
+            <div class="col-12">
+                <div th:replace="~{fragments/logs-content :: content}"></div>
+            </div>
+        </div>
+        
+        <!-- Two-column layout for other pages -->
+        <div th:unless="${activePage == 'logs'}" class="row">
             <!-- Main Content Section -->
             <div class="col-lg-6">
                 <th:block th:if="${activePage == 'upload'}">

@@ -1,8 +1,10 @@
 package com.divadvo.kotlinspring.controller.web
 
 import com.divadvo.kotlinspring.service.BookingService
+import com.divadvo.kotlinspring.service.FileStorageService
 import com.divadvo.kotlinspring.model.dto.PredefinedFile
 import com.divadvo.kotlinspring.model.enums.SourceType
+import com.divadvo.kotlinspring.model.enums.ProcessingMode
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Controller
@@ -16,6 +18,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes
 @Controller
 class FileUploadController(
     private val bookingService: BookingService,
+    private val fileStorageService: FileStorageService,
     private val objectMapper: ObjectMapper
 ) {
 
@@ -29,6 +32,7 @@ class FileUploadController(
 
     private fun addCommonAttributes(model: Model) {
         model.addAttribute("sourceTypes", SourceType.values())
+        model.addAttribute("processingModes", ProcessingMode.values())
         model.addAttribute("predefinedFiles", bookingService.getPredefinedFiles())
     }
 
@@ -38,51 +42,72 @@ class FileUploadController(
     fun handleDataProcessing(
         @RequestParam("inputMode") inputMode: String,
         @RequestParam("sourceType") sourceType: SourceType,
+        @RequestParam("processingMode") processingMode: ProcessingMode,
         @RequestParam(value = "file", required = false) file: MultipartFile?,
         @RequestParam(value = "textContent", required = false) textContent: String?,
         @RequestParam(value = "predefinedFile", required = false) predefinedFile: String?,
         redirectAttributes: RedirectAttributes
     ): String {
-        logger.info("Processing data request - inputMode: $inputMode, sourceType: $sourceType")
+        logger.info("Processing data request - inputMode: $inputMode, sourceType: $sourceType, processingMode: $processingMode")
         try {
-            val bookings = when (inputMode) {
-                "file" -> {
-                    if (file == null || file.isEmpty) {
-                        throw IllegalArgumentException("Please select a file to upload")
+            when (processingMode) {
+                ProcessingMode.PROCESS -> {
+                    val bookings = when (inputMode) {
+                        "file" -> {
+                            if (file == null || file.isEmpty) {
+                                throw IllegalArgumentException("Please select a file to upload")
+                            }
+                            bookingService.processBookings(file, sourceType)
+                        }
+                        "text" -> {
+                            if (textContent.isNullOrBlank()) {
+                                throw IllegalArgumentException("Please enter CSV content")
+                            }
+                            bookingService.processBookingsFromText(textContent, sourceType)
+                        }
+                        "predefined" -> {
+                            if (predefinedFile.isNullOrBlank()) {
+                                throw IllegalArgumentException("Please select a sample data file")
+                            }
+                            bookingService.processBookingsFromPredefinedFile(predefinedFile, sourceType)
+                        }
+                        else -> throw IllegalArgumentException("Invalid input mode selected")
                     }
-                    bookingService.processBookings(file, sourceType)
-                }
-                "text" -> {
-                    if (textContent.isNullOrBlank()) {
-                        throw IllegalArgumentException("Please enter CSV content")
+
+                    if (bookings.isEmpty()) {
+                        logger.warn("No bookings processed from input mode: $inputMode")
+                        redirectAttributes.addFlashAttribute("error", "No valid booking data found. Please ensure the data contains comma-separated values (customerName,amount)")
+                        redirectAttributes.addFlashAttribute("selectedSourceType", sourceType)
+                        redirectAttributes.addFlashAttribute("selectedProcessingMode", processingMode)
+                        return "redirect:/my-uploader/upload"
                     }
-                    bookingService.processBookingsFromText(textContent, sourceType)
+
+                    logger.info("Successfully processed ${bookings.size} bookings from $inputMode")
+                    val bookingsJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(bookings)
+
+                    redirectAttributes.addFlashAttribute("bookings", bookings)
+                    redirectAttributes.addFlashAttribute("bookingsJson", bookingsJson)
                 }
-                "predefined" -> {
-                    if (predefinedFile.isNullOrBlank()) {
-                        throw IllegalArgumentException("Please select a sample data file")
-                    }
-                    bookingService.processBookingsFromPredefinedFile(predefinedFile, sourceType)
+                
+                ProcessingMode.SAVE_TO_FOLDER -> {
+                    val savedPath = fileStorageService.saveFileToFolder(file, textContent, predefinedFile, inputMode, sourceType)
+                    logger.info("Successfully saved file to: $savedPath")
+                    redirectAttributes.addFlashAttribute("savedFilePath", savedPath)
                 }
-                else -> throw IllegalArgumentException("Invalid input mode selected")
+                
+                ProcessingMode.SIMULATE_MFT -> {
+                    logger.info("MFT simulation requested - not implemented")
+                    redirectAttributes.addFlashAttribute("simulateMft", true)
+                }
             }
 
-            if (bookings.isEmpty()) {
-                logger.warn("No bookings processed from input mode: $inputMode")
-                redirectAttributes.addFlashAttribute("error", "No valid booking data found. Please ensure the data contains comma-separated values (customerName,amount)")
-                redirectAttributes.addFlashAttribute("selectedSourceType", sourceType)
-                return "redirect:/my-uploader/upload"
-            }
-
-            logger.info("Successfully processed ${bookings.size} bookings from $inputMode")
-            val bookingsJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(bookings)
-
-            redirectAttributes.addFlashAttribute("bookings", bookings)
-            redirectAttributes.addFlashAttribute("bookingsJson", bookingsJson)
+            // Common attributes for all processing modes
             redirectAttributes.addFlashAttribute("selectedSourceType", sourceType)
             redirectAttributes.addFlashAttribute("selectedInputMode", inputMode)
+            redirectAttributes.addFlashAttribute("selectedProcessingMode", processingMode)
             redirectAttributes.addFlashAttribute("predefinedFiles", bookingService.getPredefinedFiles())
             redirectAttributes.addFlashAttribute("sourceTypes", SourceType.values())
+            redirectAttributes.addFlashAttribute("processingModes", ProcessingMode.values())
             redirectAttributes.addFlashAttribute("success", true)
 
             // Preserve form data based on input mode
@@ -103,7 +128,7 @@ class FileUploadController(
             return "redirect:/my-uploader/upload"
 
         } catch (e: Exception) {
-            logger.error("Error processing data request - inputMode: $inputMode, sourceType: $sourceType", e)
+            logger.error("Error processing data request - inputMode: $inputMode, sourceType: $sourceType, processingMode: $processingMode", e)
             val errorMessage = when {
                 e.message?.contains("not found") == true -> "Selected sample file not found. Please try a different file."
                 e.message?.contains("cannot be cast") == true -> "Invalid file format. Please upload a text file with comma-separated values."
@@ -115,8 +140,10 @@ class FileUploadController(
             redirectAttributes.addFlashAttribute("error", errorMessage)
             redirectAttributes.addFlashAttribute("selectedSourceType", sourceType)
             redirectAttributes.addFlashAttribute("selectedInputMode", inputMode)
+            redirectAttributes.addFlashAttribute("selectedProcessingMode", processingMode)
             redirectAttributes.addFlashAttribute("predefinedFiles", bookingService.getPredefinedFiles())
             redirectAttributes.addFlashAttribute("sourceTypes", SourceType.values())
+            redirectAttributes.addFlashAttribute("processingModes", ProcessingMode.values())
 
             // Preserve form data on error too
             when (inputMode) {

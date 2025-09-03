@@ -83,12 +83,41 @@
                     </div>
                 </div>
 
+                <!-- Processing Mode Selection -->
+                <div class="mb-3">
+                    <label class="form-label">Processing Mode</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="processingMode" id="processingModeProcess" value="PROCESS" 
+                               th:checked="${selectedProcessingMode == null or selectedProcessingMode.toString() == 'PROCESS'}" required>
+                        <label class="form-check-label" for="processingModeProcess">
+                            <i class="bi bi-gear"></i> Process Data
+                            <small class="text-muted d-block">Process input and show booking results</small>
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="processingMode" id="processingModeSave" value="SAVE_TO_FOLDER"
+                               th:checked="${selectedProcessingMode != null and selectedProcessingMode.toString() == 'SAVE_TO_FOLDER'}" required>
+                        <label class="form-check-label" for="processingModeSave">
+                            <i class="bi bi-folder"></i> Save to Folder
+                            <small class="text-muted d-block">Copy input to designated folder based on source type</small>
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="processingMode" id="processingModeMft" value="SIMULATE_MFT"
+                               th:checked="${selectedProcessingMode != null and selectedProcessingMode.toString() == 'SIMULATE_MFT'}" required>
+                        <label class="form-check-label" for="processingModeMft">
+                            <i class="bi bi-cloud-arrow-up"></i> Simulate MFT
+                            <small class="text-muted d-block">Placeholder for Event Hub and Blob simulation</small>
+                        </label>
+                    </div>
+                </div>
+
                 <button type="submit" class="btn btn-primary" id="submitBtn">
                     <i class="bi bi-play-circle"></i> Process Data
                 </button>
             </form>
 
-            <!-- Results Section -->
+            <!-- Results Section for Process Data Mode -->
             <div th:if="${bookings}" class="mt-4">
                 <div class="alert alert-success" role="alert">
                     <strong>Success!</strong> Processed data from: <span th:text="${sourceDescription}"></span> 
@@ -113,6 +142,44 @@
                         Total bookings: <strong th:text="${#lists.size(bookings)}"></strong> | 
                         Total amount: <strong class="text-success">$<span th:text="${#numbers.formatDecimal(#aggregates.sum(bookings.![amount]), 1, 2)}"></span></strong>
                     </p>
+                </div>
+            </div>
+
+            <!-- Results Section for Save to Folder Mode -->
+            <div th:if="${savedFilePath}" class="mt-4">
+                <div class="alert alert-success" role="alert">
+                    <strong>File Saved Successfully!</strong>
+                </div>
+                
+                <h4>File Storage Details</h4>
+                <div class="card">
+                    <div class="card-body">
+                        <p><strong>Source:</strong> <span th:text="${sourceDescription}"></span></p>
+                        <p><strong>Source Type:</strong> <span th:text="${selectedSourceType}"></span></p>
+                        <p><strong>Saved to:</strong> <code th:text="${savedFilePath}"></code></p>
+                        <p class="text-muted mb-0">
+                            <i class="bi bi-info-circle"></i> The file has been copied to the designated folder based on the source type.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Section for Simulate MFT Mode -->
+            <div th:if="${simulateMft}" class="mt-4">
+                <div class="alert alert-info" role="alert">
+                    <strong>MFT Simulation</strong>
+                </div>
+                
+                <h4>Event Hub and Blob Simulation</h4>
+                <div class="card">
+                    <div class="card-body">
+                        <p><strong>Source:</strong> <span th:text="${sourceDescription}"></span></p>
+                        <p><strong>Source Type:</strong> <span th:text="${selectedSourceType}"></span></p>
+                        <div class="alert alert-warning mb-0">
+                            <i class="bi bi-construction"></i> <strong>Not Implemented Yet</strong><br>
+                            Event Hub and Blob simulation functionality is not yet implemented.
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

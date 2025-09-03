@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+    <!-- Navigation Bar -->
+    <nav th:fragment="navbar(activePage)" class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Spring File App</a>
+            <div class="navbar-nav">
+                <a class="nav-link" th:classappend="${activePage == 'upload'} ? 'active'" href="/upload">Upload & Process</a>
+                <a class="nav-link" th:classappend="${activePage == 'browse'} ? 'active'" href="/browse">Directory Browser</a>
+                <a class="nav-link" th:classappend="${activePage == 'view'} ? 'active'" href="/view">File Viewer</a>
+            </div>
+        </div>
+    </nav>
+</body>
+</html>

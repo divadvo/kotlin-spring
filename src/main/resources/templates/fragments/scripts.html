@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+    <!-- Common Scripts Fragment -->
+    <div th:fragment="common(includeJsonEditor)">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+        <script th:if="${includeJsonEditor}" src="https://unpkg.com/jsoneditor/dist/jsoneditor.min.js"></script>
+        
+        <!-- JSON Editor Script (only for upload page) -->
+        <div th:if="${includeJsonEditor and bookings}" style="display: none;" id="bookingsJsonData" th:utext="${bookingsJson}"></div>
+        <script th:if="${includeJsonEditor and bookings}">
+            let editor;
+            const bookingsData = JSON.parse(document.getElementById('bookingsJsonData').textContent);
+            
+            document.addEventListener('DOMContentLoaded', function() {
+                const container = document.getElementById('jsoneditor');
+                const options = {
+                    mode: 'tree',
+                    modes: ['tree', 'code', 'text'],
+                    search: true,
+                    sortObjectKeys: true,
+                    navigationBar: false,
+                    statusBar: false,
+                    mainMenuBar: false
+                };
+                
+                editor = new JSONEditor(container, options);
+                editor.set(bookingsData);
+                editor.expandAll();
+            });
+            
+            function setMode(mode) {
+                if (editor) {
+                    editor.setMode(mode);
+                    
+                    // Auto-expand tree when switching to tree mode
+                    if (mode === 'tree') {
+                        setTimeout(() => editor.expandAll(), 100);
+                    }
+                    
+                    // Update active button
+                    document.querySelectorAll('.btn-group button').forEach(btn => {
+                        btn.classList.remove('btn-primary');
+                        btn.classList.add('btn-outline-primary');
+                    });
+                    event.target.classList.remove('btn-outline-primary');
+                    event.target.classList.add('btn-primary');
+                }
+            }
+            
+            function copyJson() {
+                if (editor) {
+                    const json = JSON.stringify(editor.get(), null, 2);
+                    navigator.clipboard.writeText(json).then(function() {
+                        const button = event.target;
+                        const originalText = button.textContent;
+                        button.textContent = 'Copied!';
+                        button.classList.remove('btn-outline-secondary');
+                        button.classList.add('btn-success');
+                        
+                        setTimeout(function() {
+                            button.textContent = originalText;
+                            button.classList.remove('btn-success');
+                            button.classList.add('btn-outline-secondary');
+                        }, 2000);
+                    });
+                }
+            }
+            
+            // Set initial active button
+            document.addEventListener('DOMContentLoaded', function() {
+                setTimeout(() => {
+                    document.querySelector('button[onclick="setMode(\'tree\')"]').classList.remove('btn-outline-primary');
+                    document.querySelector('button[onclick="setMode(\'tree\')"]').classList.add('btn-primary');
+                }, 100);
+            });
+        </script>
+
+        <!-- Log Viewer Script -->
+        <script>
+            let logViewer = {
+                intervalId: null,
+                lastModified: 0,
+                autoScrollEnabled: true,
+                liveUpdatesEnabled: true,
+                
+                init: function() {
+                    this.bindEvents();
+                    this.loadSettings();
+                    if (this.liveUpdatesEnabled) {
+                        this.startLiveUpdates();
+                    }
+                },
+                
+                bindEvents: function() {
+                    const self = this;
+                    
+                    document.getElementById('enableLiveLogs').addEventListener('change', function() {
+                        self.liveUpdatesEnabled = this.checked;
+                        self.saveSettings();
+                        if (this.checked) {
+                            self.startLiveUpdates();
+                        } else {
+                            self.stopLiveUpdates();
+                        }
+                    });
+                    
+                    document.getElementById('autoScroll').addEventListener('change', function() {
+                        self.autoScrollEnabled = this.checked;
+                        self.saveSettings();
+                    });
+                    
+                    document.getElementById('refreshLogs').addEventListener('click', function() {
+                        self.refreshLogs();
+                    });
+                    
+                    document.getElementById('clearLogs').addEventListener('click', function() {
+                        document.getElementById('logDisplay').textContent = '';
+                        self.updateStatus('Logs cleared');
+                    });
+                    
+                    document.getElementById('logLevel').addEventListener('change', function() {
+                        self.saveSettings();
+                        self.refreshLogs();
+                    });
+                    
+                    document.getElementById('logLines').addEventListener('change', function() {
+                        self.saveSettings();
+                        self.refreshLogs();
+                    });
+                    
+                    const logDisplay = document.getElementById('logDisplay');
+                    logDisplay.addEventListener('scroll', function() {
+                        const isScrolledToBottom = this.scrollHeight - this.clientHeight <= this.scrollTop + 1;
+                        if (!isScrolledToBottom && self.autoScrollEnabled) {
+                            document.getElementById('autoScroll').checked = false;
+                            self.autoScrollEnabled = false;
+                        }
+                    });
+                },
+                
+                startLiveUpdates: function() {
+                    if (this.intervalId) {
+                        clearInterval(this.intervalId);
+                    }
+                    
+                    const self = this;
+                    this.refreshLogs();
+                    this.intervalId = setInterval(() => {
+                        self.tailLogs();
+                    }, 3000);
+                    
+                    this.updateStatus('Live updates enabled');
+                },
+                
+                stopLiveUpdates: function() {
+                    if (this.intervalId) {
+                        clearInterval(this.intervalId);
+                        this.intervalId = null;
+                    }
+                    this.updateStatus('Live updates disabled');
+                },
+                
+                refreshLogs: function() {
+                    const level = document.getElementById('logLevel').value;
+                    const lines = document.getElementById('logLines').value;
+                    
+                    const params = new URLSearchParams({
+                        lines: lines
+                    });
+                    
+                    if (level) {
+                        params.append('level', level);
+                    }
+                    
+                    this.updateStatus('Loading logs...');
+                    
+                    fetch(`/api/logs?${params}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            this.displayLogs(data.entries, true);
+                            this.lastModified = data.lastModified;
+                            this.updateStatus(`Loaded ${data.entries.length} log entries`);
+                        })
+                        .catch(error => {
+                            console.error('Error fetching logs:', error);
+                            this.updateStatus('Error loading logs');
+                        });
+                },
+                
+                tailLogs: function() {
+                    const lines = document.getElementById('logLines').value;
+                    
+                    const params = new URLSearchParams({
+                        lines: lines,
+                        lastModified: this.lastModified
+                    });
+                    
+                    fetch(`/api/logs/tail?${params}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.entries.length > 0) {
+                                this.displayLogs(data.entries, false);
+                                this.lastModified = data.lastModified;
+                                this.updateStatus(`Updated: ${new Date().toLocaleTimeString()}`);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error tailing logs:', error);
+                            this.updateStatus('Error updating logs');
+                        });
+                },
+                
+                displayLogs: function(entries, clear = false) {
+                    const logDisplay = document.getElementById('logDisplay');
+                    
+                    if (clear) {
+                        logDisplay.textContent = '';
+                    }
+                    
+                    entries.forEach(entry => {
+                        const logLine = this.formatLogEntry(entry);
+                        logDisplay.appendChild(logLine);
+                    });
+                    
+                    if (this.autoScrollEnabled) {
+                        logDisplay.scrollTop = logDisplay.scrollHeight;
+                    }
+                    
+                    this.limitDisplayedLines(logDisplay);
+                },
+                
+                formatLogEntry: function(entry) {
+                    const line = document.createElement('div');
+                    line.style.marginBottom = '1px';
+                    
+                    let color = '#d4d4d4';
+                    switch(entry.level) {
+                        case 'ERROR':
+                            color = '#ff6b6b';
+                            break;
+                        case 'WARN':
+                            color = '#feca57';
+                            break;
+                        case 'INFO':
+                            color = '#48cae4';
+                            break;
+                        case 'DEBUG':
+                            color = '#a8a8a8';
+                            break;
+                    }
+                    
+                    const timestamp = new Date(entry.timestamp).toLocaleString();
+                    
+                    line.innerHTML = `<span style="color: #888;">${timestamp}</span> ` +
+                        `<span style="color: ${color}; font-weight: bold;">[${entry.level}]</span> ` +
+                        `<span style="color: #888;">${entry.logger}</span> - ` +
+                        `<span style="color: #d4d4d4;">${this.escapeHtml(entry.message)}</span>`;
+                    
+                    return line;
+                },
+                
+                limitDisplayedLines: function(logDisplay) {
+                    const maxLines = parseInt(document.getElementById('logLines').value) || 100;
+                    const children = logDisplay.children;
+                    
+                    if (children.length > maxLines * 1.2) {
+                        const removeCount = children.length - maxLines;
+                        for (let i = 0; i < removeCount; i++) {
+                            logDisplay.removeChild(children[0]);
+                        }
+                    }
+                },
+                
+                updateStatus: function(message) {
+                    document.getElementById('logStatus').textContent = message;
+                },
+                
+                escapeHtml: function(text) {
+                    const div = document.createElement('div');
+                    div.textContent = text;
+                    return div.innerHTML;
+                },
+                
+                saveSettings: function() {
+                    const settings = {
+                        liveUpdatesEnabled: this.liveUpdatesEnabled,
+                        autoScrollEnabled: this.autoScrollEnabled,
+                        logLevel: document.getElementById('logLevel').value,
+                        logLines: document.getElementById('logLines').value
+                    };
+                    
+                    localStorage.setItem('logViewerSettings', JSON.stringify(settings));
+                },
+                
+                loadSettings: function() {
+                    const savedSettings = localStorage.getItem('logViewerSettings');
+                    if (savedSettings) {
+                        const settings = JSON.parse(savedSettings);
+                        
+                        this.liveUpdatesEnabled = settings.liveUpdatesEnabled ?? true;
+                        this.autoScrollEnabled = settings.autoScrollEnabled ?? true;
+                        
+                        document.getElementById('enableLiveLogs').checked = this.liveUpdatesEnabled;
+                        document.getElementById('autoScroll').checked = this.autoScrollEnabled;
+                        
+                        if (settings.logLevel) {
+                            document.getElementById('logLevel').value = settings.logLevel;
+                        }
+                        
+                        if (settings.logLines) {
+                            document.getElementById('logLines').value = settings.logLines;
+                        }
+                    }
+                }
+            };
+            
+            document.addEventListener('DOMContentLoaded', function() {
+                logViewer.init();
+            });
+            
+            window.addEventListener('beforeunload', function() {
+                logViewer.stopLiveUpdates();
+            });
+        </script>
+    </div>
+</body>
+</html>

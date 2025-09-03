@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+    <!-- Upload Content Fragment -->
+    <div th:fragment="content" class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h3 class="card-title mb-0">File Upload & Processing</h3>
+        </div>
+        <div class="card-body">
+            <!-- Error Alert -->
+            <div th:if="${error}" class="alert alert-danger" role="alert">
+                <i class="bi bi-exclamation-triangle"></i>
+                <span th:text="${error}"></span>
+            </div>
+
+            <!-- Input Mode Selection -->
+            <div class="mb-4">
+                <label class="form-label">Input Method</label>
+                <div class="btn-group w-100" role="group">
+                    <input type="radio" class="btn-check" name="inputMode" id="fileMode" value="file" 
+                           th:checked="${selectedInputMode == null or selectedInputMode == 'file'}">
+                    <label class="btn btn-outline-primary" for="fileMode">
+                        <i class="bi bi-cloud-upload"></i> File Upload
+                    </label>
+                    
+                    <input type="radio" class="btn-check" name="inputMode" id="textMode" value="text"
+                           th:checked="${selectedInputMode == 'text'}">
+                    <label class="btn btn-outline-primary" for="textMode">
+                        <i class="bi bi-textarea-t"></i> Text Input
+                    </label>
+                    
+                    <input type="radio" class="btn-check" name="inputMode" id="predefinedMode" value="predefined"
+                           th:checked="${selectedInputMode == 'predefined'}">
+                    <label class="btn btn-outline-primary" for="predefinedMode">
+                        <i class="bi bi-file-earmark-text"></i> Sample Data
+                    </label>
+                </div>
+            </div>
+
+            <!-- Data Input Form -->
+            <form th:action="@{/upload}" method="post" enctype="multipart/form-data" class="mb-4" id="dataForm">
+                <input type="hidden" name="inputMode" id="selectedInputMode" th:value="${selectedInputMode != null ? selectedInputMode : 'file'}">
+                
+                <!-- Mode 1: File Upload -->
+                <div class="mb-3" id="fileUploadSection">
+                    <label for="file" class="form-label">Select File</label>
+                    <input type="file" class="form-control" id="file" name="file">
+                    <div class="form-text">Please select a CSV file for processing.</div>
+                </div>
+
+                <!-- Mode 2: Text Area -->
+                <div class="mb-3" id="textInputSection" style="display: none;">
+                    <label for="textContent" class="form-label">CSV Content</label>
+                    <textarea class="form-control" id="textContent" name="textContent" rows="8" 
+                              placeholder="Enter CSV data (customerName,amount):&#10;John Smith,250.75&#10;Jane Doe,189.50&#10;Mike Johnson,345.25"
+                              th:text="${preservedTextContent}"></textarea>
+                    <div class="form-text">Enter CSV data with format: customerName,amount (one per line).</div>
+                </div>
+
+                <!-- Mode 3: Predefined Files -->
+                <div class="mb-3" id="predefinedFileSection" style="display: none;">
+                    <label for="predefinedFile" class="form-label">Select Sample Data</label>
+                    <select class="form-select" id="predefinedFile" name="predefinedFile">
+                        <option value="">Choose a sample file...</option>
+                        <option th:each="file : ${predefinedFiles}" 
+                                th:value="${file.filename}" 
+                                th:selected="${selectedPredefinedFile == file.filename}"
+                                th:text="${file.displayName + ' (' + file.recordCount + ' records)'}">
+                        </option>
+                    </select>
+                    <div class="form-text">Select from predefined sample data files.</div>
+                </div>
+
+                <!-- Source Type Selection -->
+                <div class="mb-3">
+                    <label class="form-label">Source Type</label>
+                    <div class="form-check" th:each="sourceType : ${sourceTypes}">
+                        <input class="form-check-input" type="radio" 
+                               th:name="sourceType" 
+                               th:value="${sourceType}" 
+                               th:id="${'sourceType' + sourceType}"
+                               th:checked="${sourceType == selectedSourceType}"
+                               required>
+                        <label class="form-check-label" th:for="${'sourceType' + sourceType}" th:text="${sourceType}">
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="submitBtn">
+                    <i class="bi bi-play-circle"></i> Process Data
+                </button>
+            </form>
+
+            <!-- Results Section -->
+            <div th:if="${bookings}" class="mt-4">
+                <div class="alert alert-success" role="alert">
+                    <strong>Success!</strong> Processed data from: <span th:text="${sourceDescription}"></span> 
+                    with source type: <span th:text="${selectedSourceType}"></span>
+                </div>
+                
+                <h4>Booking Results</h4>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="setMode('tree')">Tree</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="setMode('code')">Code</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="setMode('text')">Text</button>
+                    </div>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="copyJson()">
+                        Copy JSON
+                    </button>
+                </div>
+                <div id="jsoneditor" style="height: 400px;"></div>
+                
+                <div class="mt-3">
+                    <p class="text-muted">
+                        Total bookings: <strong th:text="${#lists.size(bookings)}"></strong> | 
+                        Total amount: <strong class="text-success">$<span th:text="${#numbers.formatDecimal(#aggregates.sum(bookings.![amount]), 1, 2)}"></span></strong>
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Input Mode Switching Script -->
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const inputModeRadios = document.querySelectorAll('input[name="inputMode"]');
+                const fileUploadSection = document.getElementById('fileUploadSection');
+                const textInputSection = document.getElementById('textInputSection');
+                const predefinedFileSection = document.getElementById('predefinedFileSection');
+                const selectedInputModeField = document.getElementById('selectedInputMode');
+                const submitBtn = document.getElementById('submitBtn');
+                const dataForm = document.getElementById('dataForm');
+                
+                // Initialize UI based on server-side selected mode
+                initializeMode();
+                
+                // Handle mode switching
+                inputModeRadios.forEach(radio => {
+                    radio.addEventListener('change', function() {
+                        const selectedMode = this.value;
+                        selectedInputModeField.value = selectedMode;
+                        
+                        // Hide all sections first
+                        fileUploadSection.style.display = 'none';
+                        textInputSection.style.display = 'none';
+                        predefinedFileSection.style.display = 'none';
+                        
+                        // Clear previous validation states
+                        clearValidation();
+                        
+                        // Show selected section and update button text
+                        switch(selectedMode) {
+                            case 'file':
+                                fileUploadSection.style.display = 'block';
+                                submitBtn.innerHTML = '<i class="bi bi-cloud-upload"></i> Upload & Process';
+                                break;
+                            case 'text':
+                                textInputSection.style.display = 'block';
+                                submitBtn.innerHTML = '<i class="bi bi-textarea-t"></i> Process Text';
+                                break;
+                            case 'predefined':
+                                predefinedFileSection.style.display = 'block';
+                                submitBtn.innerHTML = '<i class="bi bi-file-earmark-text"></i> Process Sample Data';
+                                break;
+                        }
+                    });
+                });
+                
+                // Form validation before submission
+                dataForm.addEventListener('submit', function(e) {
+                    const selectedMode = selectedInputModeField.value;
+                    let isValid = true;
+                    let errorMessage = '';
+                    
+                    switch(selectedMode) {
+                        case 'file':
+                            const fileInput = document.getElementById('file');
+                            if (!fileInput.files.length) {
+                                isValid = false;
+                                errorMessage = 'Please select a file to upload.';
+                                showFieldError(fileInput, errorMessage);
+                            }
+                            break;
+                            
+                        case 'text':
+                            const textContent = document.getElementById('textContent');
+                            if (!textContent.value.trim()) {
+                                isValid = false;
+                                errorMessage = 'Please enter CSV content.';
+                                showFieldError(textContent, errorMessage);
+                            } else if (!validateCSVFormat(textContent.value)) {
+                                isValid = false;
+                                errorMessage = 'Please enter valid CSV format (customerName,amount).';
+                                showFieldError(textContent, errorMessage);
+                            }
+                            break;
+                            
+                        case 'predefined':
+                            const predefinedFile = document.getElementById('predefinedFile');
+                            if (!predefinedFile.value) {
+                                isValid = false;
+                                errorMessage = 'Please select a sample data file.';
+                                showFieldError(predefinedFile, errorMessage);
+                            }
+                            break;
+                    }
+                    
+                    if (!isValid) {
+                        e.preventDefault();
+                        return false;
+                    }
+                });
+                
+                // Helper functions
+                function clearValidation() {
+                    document.querySelectorAll('.is-invalid').forEach(el => {
+                        el.classList.remove('is-invalid');
+                    });
+                    document.querySelectorAll('.invalid-feedback').forEach(el => {
+                        el.remove();
+                    });
+                }
+                
+                function showFieldError(field, message) {
+                    field.classList.add('is-invalid');
+                    
+                    // Remove existing error message
+                    const existingError = field.parentNode.querySelector('.invalid-feedback');
+                    if (existingError) {
+                        existingError.remove();
+                    }
+                    
+                    // Add new error message
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'invalid-feedback';
+                    errorDiv.textContent = message;
+                    field.parentNode.appendChild(errorDiv);
+                }
+                
+                function validateCSVFormat(text) {
+                    const lines = text.trim().split('\n').filter(line => line.trim());
+                    if (lines.length === 0) return false;
+                    
+                    return lines.every(line => {
+                        const parts = line.split(',');
+                        return parts.length >= 2 && parts[0].trim() && !isNaN(parseFloat(parts[1].trim()));
+                    });
+                }
+                
+                function initializeMode() {
+                    const currentMode = selectedInputModeField.value;
+                    
+                    // Hide all sections first
+                    fileUploadSection.style.display = 'none';
+                    textInputSection.style.display = 'none';
+                    predefinedFileSection.style.display = 'none';
+                    
+                    // Show the correct section and set button text
+                    switch(currentMode) {
+                        case 'file':
+                            fileUploadSection.style.display = 'block';
+                            submitBtn.innerHTML = '<i class="bi bi-cloud-upload"></i> Upload & Process';
+                            break;
+                        case 'text':
+                            textInputSection.style.display = 'block';
+                            submitBtn.innerHTML = '<i class="bi bi-textarea-t"></i> Process Text';
+                            break;
+                        case 'predefined':
+                            predefinedFileSection.style.display = 'block';
+                            submitBtn.innerHTML = '<i class="bi bi-file-earmark-text"></i> Process Sample Data';
+                            break;
+                    }
+                }
+            });
+        </script>
+    </div>
+</body>
+</html>

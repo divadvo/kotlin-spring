@@ -126,14 +126,10 @@ class BookingService {
                             filename
                         }
                         
-                        val content = resource.inputStream.bufferedReader().readText()
-                        val lineCount = content.lines().count { it.isNotBlank() }
-                        
                         PredefinedFile(
                             filename = filename,
                             relativePath = relativePath,
-                            displayName = generateDisplayName(relativePath),
-                            recordCount = lineCount
+                            displayName = generateDisplayName(relativePath)
                         )
                     } else null
                 } catch (e: Exception) {

@@ -62,7 +62,7 @@ class FileStorageService(
                 val baseName = if (originalName.contains(".")) originalName.substringBeforeLast(".") else originalName
                 "${timestamp}_${baseName}.${extension}"
             }
-            "text" -> "${timestamp}_text-input.txt"
+            "text" -> "${timestamp}_text-input.xml"
             "predefined" -> {
                 val originalName = predefinedFile ?: "sample"
                 val extension = if (originalName.contains(".")) originalName.substringAfterLast(".") else "xml"

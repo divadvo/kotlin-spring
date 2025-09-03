@@ -63,7 +63,7 @@
                         <option th:each="file : ${predefinedFiles}" 
                                 th:value="${file.relativePath}" 
                                 th:selected="${selectedPredefinedFile == file.relativePath}"
-                                th:text="${file.displayName + ' (' + file.recordCount + ' records)'}">
+                                th:text="${file.displayName}">
                         </option>
                     </select>
                 </div>

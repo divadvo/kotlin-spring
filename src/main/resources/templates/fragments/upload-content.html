@@ -38,7 +38,7 @@
             </div>
 
             <!-- Data Input Form -->
-            <form th:action="@{/upload}" method="post" enctype="multipart/form-data" class="mb-4" id="dataForm">
+            <form th:action="@{/my-uploader/upload}" method="post" enctype="multipart/form-data" class="mb-4" id="dataForm">
                 <input type="hidden" name="inputMode" id="selectedInputMode" th:value="${selectedInputMode != null ? selectedInputMode : 'file'}">
                 
                 <!-- Mode 1: File Upload -->

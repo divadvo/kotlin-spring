@@ -14,13 +14,13 @@
             </div>
 
             <!-- Path Form -->
-            <form th:action="@{/browse}" method="get" class="mb-4">
+            <form th:action="@{/my-uploader/browse}" method="get" class="mb-4">
                 <div class="mb-3">
                     <label for="path" class="form-label">Directory Path</label>
                     <input type="text" class="form-control" id="path" name="path" th:value="${currentPath}" placeholder="/path/to/directory">
                 </div>
                 <button type="submit" class="btn btn-primary">Browse</button>
-                <a th:if="${parentPath}" th:href="@{/browse(path=${parentPath})}" class="btn btn-secondary">Parent Directory</a>
+                <a th:if="${parentPath}" th:href="@{/my-uploader/browse(path=${parentPath})}" class="btn btn-secondary">Parent Directory</a>
             </form>
 
             <!-- Directory Listing -->
@@ -39,10 +39,10 @@
                             <tr th:each="item : ${items}">
                                 <td>
                                     <span th:if="${item.isDirectory}">
-                                        📁 <a th:href="@{/browse(path=${currentPath + '/' + item.name})}" th:text="${item.name}"></a>
+                                        📁 <a th:href="@{/my-uploader/browse(path=${currentPath + '/' + item.name})}" th:text="${item.name}"></a>
                                     </span>
                                     <span th:unless="${item.isDirectory}">
-                                        📄 <a th:href="@{/view(path=${currentPath + '/' + item.name})}" th:text="${item.name}"></a>
+                                        📄 <a th:href="@{/my-uploader/view(path=${currentPath + '/' + item.name})}" th:text="${item.name}"></a>
                                     </span>
                                 </td>
                                 <td>

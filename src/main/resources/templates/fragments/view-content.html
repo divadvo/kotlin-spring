@@ -14,13 +14,13 @@
             </div>
 
             <!-- Path Form -->
-            <form th:action="@{/view}" method="get" class="mb-4">
+            <form th:action="@{/my-uploader/view}" method="get" class="mb-4">
                 <div class="mb-3">
                     <label for="path" class="form-label">File Path</label>
                     <input type="text" class="form-control" id="path" name="path" th:value="${currentPath}" placeholder="/path/to/file.txt">
                 </div>
                 <button type="submit" class="btn btn-primary">View File</button>
-                <a th:if="${parentPath}" th:href="@{/browse(path=${parentPath})}" class="btn btn-secondary">Browse Directory</a>
+                <a th:if="${parentPath}" th:href="@{/my-uploader/browse(path=${parentPath})}" class="btn btn-secondary">Browse Directory</a>
             </form>
 
             <!-- File Info -->

@@ -25,6 +25,9 @@
                 <th:block th:if="${activePage == 'browse'}">
                     <div th:replace="~{fragments/browse-content :: content}"></div>
                 </th:block>
+                <th:block th:if="${activePage == 'db'}">
+                    <div th:replace="~{fragments/db-content :: content}"></div>
+                </th:block>
             </div>
             
             <!-- Log Viewer Section -->

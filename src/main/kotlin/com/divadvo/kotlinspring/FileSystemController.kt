@@ -85,4 +85,10 @@ class FileSystemController {
         
         return "view"
     }
+    
+    @GetMapping("/db")
+    fun db(model: Model): String {
+        logger.info("Accessing DB Viewer page")
+        return "db"
+    }
 }

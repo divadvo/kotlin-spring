@@ -150,9 +150,20 @@
                     <div class="card-body">
                         <p><strong>Source:</strong> <span th:text="${sourceDescription}"></span></p>
                         <p><strong>Source Type:</strong> <span th:text="${selectedSourceType}"></span></p>
-                        <p><strong>Saved to:</strong> <code th:text="${savedFilePath}"></code></p>
+                        <p><strong>Saved to:</strong> 
+                           <a th:href="@{/my-uploader/view(path=${savedFilePath})}" 
+                              class="text-decoration-none">
+                              <code th:text="${savedFilePath}"></code>
+                           </a>
+                        </p>
+                        <p><strong>Folder:</strong> 
+                           <a th:href="@{/my-uploader/browse(path=${savedFolderPath})}" 
+                              class="text-decoration-none">
+                              <code th:text="${savedFolderPath}"></code>
+                           </a>
+                        </p>
                         <p class="text-muted mb-0">
-                            <i class="bi bi-info-circle"></i> The file has been copied to the designated folder based on the source type.
+                            <i class="bi bi-info-circle"></i> The file has been copied to the designated folder based on the source type. Click the file path to view content, or the folder path to browse directory.
                         </p>
                     </div>
                 </div>

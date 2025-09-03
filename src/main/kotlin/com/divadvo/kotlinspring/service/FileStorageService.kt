@@ -1,5 +1,6 @@
 package com.divadvo.kotlinspring.service
 
+import com.divadvo.kotlinspring.model.dto.FileStorageResult
 import com.divadvo.kotlinspring.model.enums.SourceType
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -24,7 +25,7 @@ class FileStorageService(
         predefinedFile: String?, 
         inputMode: String, 
         sourceType: SourceType
-    ): String {
+    ): FileStorageResult {
         val folderPath = when (sourceType) {
             SourceType.A -> pathA
             SourceType.B -> pathB
@@ -117,6 +118,9 @@ class FileStorageService(
             throw IllegalStateException("Failed to save file: ${e.message}", e)
         }
 
-        return targetFile.absolutePath
+        return FileStorageResult(
+            filePath = targetFile.absolutePath,
+            folderPath = folder.absolutePath
+        )
     }
 }

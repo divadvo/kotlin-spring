@@ -90,9 +90,10 @@ class FileUploadController(
                 }
                 
                 ProcessingMode.SAVE_TO_FOLDER -> {
-                    val savedPath = fileStorageService.saveFileToFolder(file, textContent, predefinedFile, inputMode, sourceType)
-                    logger.info("Successfully saved file to: $savedPath")
-                    redirectAttributes.addFlashAttribute("savedFilePath", savedPath)
+                    val result = fileStorageService.saveFileToFolder(file, textContent, predefinedFile, inputMode, sourceType)
+                    logger.info("Successfully saved file to: ${result.filePath}")
+                    redirectAttributes.addFlashAttribute("savedFilePath", result.filePath)
+                    redirectAttributes.addFlashAttribute("savedFolderPath", result.folderPath)
                 }
                 
                 ProcessingMode.SIMULATE_MFT -> {

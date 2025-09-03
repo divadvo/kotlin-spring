@@ -1,9 +1,12 @@
 package com.divadvo.kotlinspring
 
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.ModelAttribute
+import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import java.io.File
 import java.nio.file.Files
@@ -13,8 +16,8 @@ import java.nio.file.Paths
 class FileSystemController {
     
     private val logger = LoggerFactory.getLogger(FileSystemController::class.java)
-    
-    @GetMapping("/browse")
+
+    @GetMapping(value = ["/my-uploader/browse", "/my-uploader/browse/"])
     fun browse(@RequestParam(required = false) path: String?, model: Model): String {
         val directoryPath = path ?: System.getProperty("user.home")
         logger.info("Browsing directory: $directoryPath")
@@ -50,7 +53,7 @@ class FileSystemController {
         return "browse"
     }
     
-    @GetMapping("/view")
+    @GetMapping(value = ["/my-uploader/view", "/my-uploader/view/"])
     fun view(@RequestParam(required = false) path: String?, model: Model): String {
         val filePath = path ?: ""
         logger.info("Viewing file: $filePath")
@@ -86,13 +89,13 @@ class FileSystemController {
         return "view"
     }
     
-    @GetMapping("/logs")
+    @GetMapping(value = ["/my-uploader/logs", "/my-uploader/logs/"])
     fun logs(model: Model): String {
         logger.info("Accessing Logs page")
         return "logs"
     }
     
-    @GetMapping("/db")
+    @GetMapping(value = ["/my-uploader/db", "/my-uploader/db/"])
     fun db(model: Model): String {
         logger.info("Accessing DB Viewer page")
         return "db"

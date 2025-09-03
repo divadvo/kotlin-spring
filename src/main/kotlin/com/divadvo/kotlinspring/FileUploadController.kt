@@ -17,7 +17,7 @@ class FileUploadController(
     
     private val logger = LoggerFactory.getLogger(FileUploadController::class.java)
 
-    @GetMapping("/upload")
+    @GetMapping("/my-uploader/upload")
     fun uploadForm(model: Model): String {
         addCommonAttributes(model)
         return "upload"
@@ -64,7 +64,7 @@ class FileUploadController(
             }
     }
 
-    @PostMapping("/upload")
+    @PostMapping(value = ["/my-uploader/upload", "/my-uploader/upload/"])
     fun handleDataProcessing(
         @RequestParam("inputMode") inputMode: String,
         @RequestParam("sourceType") sourceType: SourceType,

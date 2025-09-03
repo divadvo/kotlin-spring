@@ -313,36 +313,7 @@
                         
                         // Check for parsing errors
                         const parserError = xmlDoc.getElementsByTagName("parsererror");
-                        if (parserError.length > 0) {
-                            return false;
-                        }
-                        
-                        // Check for bookings root element
-                        const bookingsElement = xmlDoc.getElementsByTagName("bookings")[0];
-                        if (!bookingsElement) {
-                            return false;
-                        }
-                        
-                        // Check for at least one booking element
-                        const bookingElements = xmlDoc.getElementsByTagName("booking");
-                        if (bookingElements.length === 0) {
-                            return false;
-                        }
-                        
-                        // Validate each booking has customerName and amount
-                        for (let i = 0; i < bookingElements.length; i++) {
-                            const booking = bookingElements[i];
-                            const customerName = booking.getElementsByTagName("customerName")[0];
-                            const amount = booking.getElementsByTagName("amount")[0];
-                            
-                            if (!customerName || !amount || 
-                                !customerName.textContent.trim() || 
-                                isNaN(parseFloat(amount.textContent.trim()))) {
-                                return false;
-                            }
-                        }
-                        
-                        return true;
+                        return parserError.length === 0;
                     } catch (e) {
                         return false;
                     }

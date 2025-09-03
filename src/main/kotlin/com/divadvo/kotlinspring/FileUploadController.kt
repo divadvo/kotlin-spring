@@ -1,6 +1,7 @@
 package com.divadvo.kotlinspring
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.slf4j.LoggerFactory
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
@@ -13,6 +14,8 @@ class FileUploadController(
     private val bookingService: BookingService,
     private val objectMapper: ObjectMapper
 ) {
+    
+    private val logger = LoggerFactory.getLogger(FileUploadController::class.java)
 
     @GetMapping("/upload")
     fun uploadForm(model: Model): String {
@@ -70,6 +73,7 @@ class FileUploadController(
         @RequestParam(value = "predefinedFile", required = false) predefinedFile: String?,
         redirectAttributes: RedirectAttributes
     ): String {
+        logger.info("Processing data request - inputMode: $inputMode, sourceType: $sourceType")
         try {
             val bookings = when (inputMode) {
                 "file" -> {
@@ -94,11 +98,13 @@ class FileUploadController(
             }
             
             if (bookings.isEmpty()) {
+                logger.warn("No bookings processed from input mode: $inputMode")
                 redirectAttributes.addFlashAttribute("error", "No valid booking data found. Please ensure the data contains comma-separated values (customerName,amount)")
                 redirectAttributes.addFlashAttribute("selectedSourceType", sourceType)
                 return "redirect:/upload"
             }
             
+            logger.info("Successfully processed ${bookings.size} bookings from $inputMode")
             val bookingsJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(bookings)
             
             redirectAttributes.addFlashAttribute("bookings", bookings)
@@ -127,6 +133,7 @@ class FileUploadController(
             return "redirect:/upload"
             
         } catch (e: Exception) {
+            logger.error("Error processing data request - inputMode: $inputMode, sourceType: $sourceType", e)
             val errorMessage = when {
                 e.message?.contains("not found") == true -> "Selected sample file not found. Please try a different file."
                 e.message?.contains("cannot be cast") == true -> "Invalid file format. Please upload a text file with comma-separated values."

@@ -26,17 +26,20 @@
                         <div class="mb-4">
                             <label class="form-label">Input Method</label>
                             <div class="btn-group w-100" role="group">
-                                <input type="radio" class="btn-check" name="inputMode" id="fileMode" value="file" checked>
+                                <input type="radio" class="btn-check" name="inputMode" id="fileMode" value="file" 
+                                       th:checked="${selectedInputMode == null or selectedInputMode == 'file'}">
                                 <label class="btn btn-outline-primary" for="fileMode">
                                     <i class="bi bi-cloud-upload"></i> File Upload
                                 </label>
                                 
-                                <input type="radio" class="btn-check" name="inputMode" id="textMode" value="text">
+                                <input type="radio" class="btn-check" name="inputMode" id="textMode" value="text"
+                                       th:checked="${selectedInputMode == 'text'}">
                                 <label class="btn btn-outline-primary" for="textMode">
                                     <i class="bi bi-textarea-t"></i> Text Input
                                 </label>
                                 
-                                <input type="radio" class="btn-check" name="inputMode" id="predefinedMode" value="predefined">
+                                <input type="radio" class="btn-check" name="inputMode" id="predefinedMode" value="predefined"
+                                       th:checked="${selectedInputMode == 'predefined'}">
                                 <label class="btn btn-outline-primary" for="predefinedMode">
                                     <i class="bi bi-file-earmark-text"></i> Sample Data
                                 </label>
@@ -45,7 +48,7 @@
 
                         <!-- Data Input Form -->
                         <form th:action="@{/upload}" method="post" enctype="multipart/form-data" class="mb-4" id="dataForm">
-                            <input type="hidden" name="inputMode" id="selectedInputMode" value="file">
+                            <input type="hidden" name="inputMode" id="selectedInputMode" th:value="${selectedInputMode != null ? selectedInputMode : 'file'}">
                             
                             <!-- Mode 1: File Upload -->
                             <div class="mb-3" id="fileUploadSection">
@@ -58,7 +61,8 @@
                             <div class="mb-3" id="textInputSection" style="display: none;">
                                 <label for="textContent" class="form-label">CSV Content</label>
                                 <textarea class="form-control" id="textContent" name="textContent" rows="8" 
-                                          placeholder="Enter CSV data (customerName,amount):&#10;John Smith,250.75&#10;Jane Doe,189.50&#10;Mike Johnson,345.25"></textarea>
+                                          placeholder="Enter CSV data (customerName,amount):&#10;John Smith,250.75&#10;Jane Doe,189.50&#10;Mike Johnson,345.25"
+                                          th:text="${preservedTextContent}"></textarea>
                                 <div class="form-text">Enter CSV data with format: customerName,amount (one per line).</div>
                             </div>
 
@@ -67,9 +71,9 @@
                                 <label for="predefinedFile" class="form-label">Select Sample Data</label>
                                 <select class="form-select" id="predefinedFile" name="predefinedFile">
                                     <option value="">Choose a sample file...</option>
-                                    <option value="customers-type-a.csv">Customer Data Type A (10 records)</option>
-                                    <option value="bookings-sample.csv">Booking Sample Data (10 records)</option>
-                                    <option value="demo-data.csv">Demo Dataset (10 records)</option>
+                                    <option value="customers-type-a.csv" th:selected="${selectedPredefinedFile == 'customers-type-a.csv'}">Customer Data Type A (10 records)</option>
+                                    <option value="bookings-sample.csv" th:selected="${selectedPredefinedFile == 'bookings-sample.csv'}">Booking Sample Data (10 records)</option>
+                                    <option value="demo-data.csv" th:selected="${selectedPredefinedFile == 'demo-data.csv'}">Demo Dataset (10 records)</option>
                                 </select>
                                 <div class="form-text">Select from predefined sample data files.</div>
                             </div>
@@ -209,6 +213,9 @@
             const submitBtn = document.getElementById('submitBtn');
             const dataForm = document.getElementById('dataForm');
             
+            // Initialize UI based on server-side selected mode
+            initializeMode();
+            
             // Handle mode switching
             inputModeRadios.forEach(radio => {
                 radio.addEventListener('change', function() {
@@ -320,6 +327,31 @@
                     const parts = line.split(',');
                     return parts.length >= 2 && parts[0].trim() && !isNaN(parseFloat(parts[1].trim()));
                 });
+            }
+            
+            function initializeMode() {
+                const currentMode = selectedInputModeField.value;
+                
+                // Hide all sections first
+                fileUploadSection.style.display = 'none';
+                textInputSection.style.display = 'none';
+                predefinedFileSection.style.display = 'none';
+                
+                // Show the correct section and set button text
+                switch(currentMode) {
+                    case 'file':
+                        fileUploadSection.style.display = 'block';
+                        submitBtn.innerHTML = '<i class="bi bi-cloud-upload"></i> Upload & Process';
+                        break;
+                    case 'text':
+                        textInputSection.style.display = 'block';
+                        submitBtn.innerHTML = '<i class="bi bi-textarea-t"></i> Process Text';
+                        break;
+                    case 'predefined':
+                        predefinedFileSection.style.display = 'block';
+                        submitBtn.innerHTML = '<i class="bi bi-file-earmark-text"></i> Process Sample Data';
+                        break;
+                }
             }
         });
     </script>

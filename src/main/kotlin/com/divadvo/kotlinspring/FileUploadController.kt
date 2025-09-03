@@ -62,7 +62,14 @@ class FileUploadController(
             redirectAttributes.addFlashAttribute("bookings", bookings)
             redirectAttributes.addFlashAttribute("bookingsJson", bookingsJson)
             redirectAttributes.addFlashAttribute("selectedSourceType", sourceType)
+            redirectAttributes.addFlashAttribute("selectedInputMode", inputMode)
             redirectAttributes.addFlashAttribute("success", true)
+            
+            // Preserve form data based on input mode
+            when (inputMode) {
+                "text" -> redirectAttributes.addFlashAttribute("preservedTextContent", textContent)
+                "predefined" -> redirectAttributes.addFlashAttribute("selectedPredefinedFile", predefinedFile)
+            }
             
             // Set source description based on input mode
             val sourceDescription = when (inputMode) {
@@ -86,6 +93,14 @@ class FileUploadController(
             
             redirectAttributes.addFlashAttribute("error", errorMessage)
             redirectAttributes.addFlashAttribute("selectedSourceType", sourceType)
+            redirectAttributes.addFlashAttribute("selectedInputMode", inputMode)
+            
+            // Preserve form data on error too
+            when (inputMode) {
+                "text" -> redirectAttributes.addFlashAttribute("preservedTextContent", textContent)
+                "predefined" -> redirectAttributes.addFlashAttribute("selectedPredefinedFile", predefinedFile)
+            }
+            
             return "redirect:/upload"
         }
     }

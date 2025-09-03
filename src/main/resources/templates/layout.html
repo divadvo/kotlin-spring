@@ -28,12 +28,12 @@
             
             <!-- Log Viewer Section -->
             <div class="col-lg-6">
-                <div th:replace="fragments/logviewer :: logviewer"></div>
+                <div th:replace="~{fragments/logviewer :: logviewer}"></div>
             </div>
         </div>
     </div>
 
     <!-- Common Scripts -->
-    <div th:replace="fragments/scripts :: common(${includeJsonEditor})"></div>
+    <div th:replace="~{fragments/scripts :: common(${includeJsonEditor})}"></div>
 </body>
 </html>

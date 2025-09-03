@@ -43,9 +43,8 @@
                 
                 <!-- Mode 1: File Upload -->
                 <div class="mb-3" id="fileUploadSection">
-                    <label for="file" class="form-label">Select File</label>
+                    <label for="file" class="form-label">Select File for Processing</label>
                     <input type="file" class="form-control" id="file" name="file">
-                    <div class="form-text">Please select a CSV file for processing.</div>
                 </div>
 
                 <!-- Mode 2: Text Area -->
@@ -54,7 +53,6 @@
                     <textarea class="form-control" id="textContent" name="textContent" rows="8" 
                               placeholder="Enter CSV data (customerName,amount):&#10;John Smith,250.75&#10;Jane Doe,189.50&#10;Mike Johnson,345.25"
                               th:text="${preservedTextContent}"></textarea>
-                    <div class="form-text">Enter CSV data with format: customerName,amount (one per line).</div>
                 </div>
 
                 <!-- Mode 3: Predefined Files -->
@@ -68,7 +66,6 @@
                                 th:text="${file.displayName + ' (' + file.recordCount + ' records)'}">
                         </option>
                     </select>
-                    <div class="form-text">Select from predefined sample data files.</div>
                 </div>
 
                 <!-- Source Type Selection -->

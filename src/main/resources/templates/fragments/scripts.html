@@ -7,8 +7,8 @@
         <script th:if="${includeJsonEditor}" src="https://unpkg.com/jsoneditor/dist/jsoneditor.min.js"></script>
         
         <!-- JSON Editor Script (only for upload page) -->
-        <div th:if="${includeJsonEditor and bookings}" style="display: none;" id="bookingsJsonData" th:utext="${bookingsJson}"></div>
-        <script th:if="${includeJsonEditor and bookings}">
+        <div th:if="${includeJsonEditor and bookings != null}" style="display: none;" id="bookingsJsonData" th:utext="${bookingsJson}"></div>
+        <script th:if="${includeJsonEditor and bookings != null}">
             let editor;
             const bookingsData = JSON.parse(document.getElementById('bookingsJsonData').textContent);
             

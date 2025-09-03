@@ -33,9 +33,25 @@ class FileStorageService(
         val timestamp = LocalDateTime.now().format(timestampFormatter)
         val folder = File(folderPath)
         
+        logger.info("Target storage folder: ${folder.absolutePath}")
+        
         if (!folder.exists()) {
-            folder.mkdirs()
-            logger.info("Created directory: ${folder.absolutePath}")
+            logger.info("Directory doesn't exist, creating: ${folder.absolutePath}")
+            val created = folder.mkdirs()
+            if (created) {
+                logger.info("Successfully created directory: ${folder.absolutePath}")
+            } else {
+                logger.error("Failed to create directory: ${folder.absolutePath}")
+                throw IllegalStateException("Unable to create storage directory: ${folder.absolutePath}")
+            }
+        } else {
+            logger.info("Directory already exists: ${folder.absolutePath}")
+        }
+        
+        // Check if directory is writable
+        if (!folder.canWrite()) {
+            logger.error("Directory is not writable: ${folder.absolutePath}")
+            throw IllegalStateException("Storage directory is not writable: ${folder.absolutePath}")
         }
 
         val fileName = when (inputMode) {
@@ -56,40 +72,49 @@ class FileStorageService(
         }
 
         val targetFile = File(folder, fileName)
+        logger.info("Target file path: ${targetFile.absolutePath}")
         
-        when (inputMode) {
-            "file" -> {
-                if (file != null && !file.isEmpty) {
-                    file.transferTo(targetFile)
-                    logger.info("Saved uploaded file to: ${targetFile.absolutePath}")
-                } else {
-                    throw IllegalArgumentException("No file provided for file input mode")
-                }
-            }
-            "text" -> {
-                if (!textContent.isNullOrBlank()) {
-                    targetFile.writeText(textContent)
-                    logger.info("Saved text content to: ${targetFile.absolutePath}")
-                } else {
-                    throw IllegalArgumentException("No text content provided")
-                }
-            }
-            "predefined" -> {
-                if (!predefinedFile.isNullOrBlank()) {
-                    val sourceFile = this::class.java.getResourceAsStream("/data/$predefinedFile")
-                        ?: throw IllegalArgumentException("Predefined file not found: $predefinedFile")
-                    
-                    sourceFile.use { input ->
-                        targetFile.outputStream().use { output ->
-                            input.copyTo(output)
-                        }
+        try {
+            when (inputMode) {
+                "file" -> {
+                    if (file != null && !file.isEmpty) {
+                        logger.info("Transferring uploaded file (${file.size} bytes) to: ${targetFile.absolutePath}")
+                        file.transferTo(targetFile)
+                        logger.info("Successfully saved uploaded file to: ${targetFile.absolutePath}")
+                    } else {
+                        throw IllegalArgumentException("No file provided for file input mode")
                     }
-                    logger.info("Saved predefined file to: ${targetFile.absolutePath}")
-                } else {
-                    throw IllegalArgumentException("No predefined file specified")
                 }
+                "text" -> {
+                    if (!textContent.isNullOrBlank()) {
+                        logger.info("Writing text content (${textContent.length} characters) to: ${targetFile.absolutePath}")
+                        targetFile.writeText(textContent)
+                        logger.info("Successfully saved text content to: ${targetFile.absolutePath}")
+                    } else {
+                        throw IllegalArgumentException("No text content provided")
+                    }
+                }
+                "predefined" -> {
+                    if (!predefinedFile.isNullOrBlank()) {
+                        logger.info("Copying predefined file '$predefinedFile' to: ${targetFile.absolutePath}")
+                        val sourceFile = this::class.java.getResourceAsStream("/data/$predefinedFile")
+                            ?: throw IllegalArgumentException("Predefined file not found: $predefinedFile")
+                        
+                        sourceFile.use { input ->
+                            targetFile.outputStream().use { output ->
+                                input.copyTo(output)
+                            }
+                        }
+                        logger.info("Successfully saved predefined file to: ${targetFile.absolutePath}")
+                    } else {
+                        throw IllegalArgumentException("No predefined file specified")
+                    }
+                }
+                else -> throw IllegalArgumentException("Unknown input mode: $inputMode")
             }
-            else -> throw IllegalArgumentException("Unknown input mode: $inputMode")
+        } catch (e: Exception) {
+            logger.error("Failed to save file to: ${targetFile.absolutePath}", e)
+            throw IllegalStateException("Failed to save file: ${e.message}", e)
         }
 
         return targetFile.absolutePath

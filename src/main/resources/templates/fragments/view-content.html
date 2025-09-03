@@ -34,11 +34,53 @@
             <!-- File Content -->
             <div th:if="${content}">
                 <h5>Content:</h5>
-                <div class="border rounded p-3" style="max-height: 500px; overflow-y: auto;">
-                    <pre th:text="${content}" style="white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 12px; margin: 0;"></pre>
+                <div class="border rounded" style="max-height: 500px; overflow-y: auto;">
+                    <div id="fileViewer" th:data-content="${content}" th:data-filename="${fileName}"></div>
                 </div>
             </div>
         </div>
+        
+        <!-- File Viewer CodeMirror Script -->
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const fileViewerElement = document.getElementById('fileViewer');
+                if (fileViewerElement && window.CodeMirror) {
+                    const content = fileViewerElement.dataset.content;
+                    const filename = fileViewerElement.dataset.filename || '';
+                    
+                    if (content) {
+                        const { EditorView, basicSetup, xml, EditorState } = window.CodeMirror;
+                        
+                        // Simple file extension detection
+                        function getLanguageExtension(filename) {
+                            const ext = filename.toLowerCase().split('.').pop();
+                            switch(ext) {
+                                case 'xml':
+                                case 'svg':
+                                case 'xsl':
+                                case 'xslt':
+                                    return xml();
+                                default:
+                                    return []; // Plain text
+                            }
+                        }
+                        
+                        // Create read-only editor
+                        const editor = new EditorView({
+                            state: EditorState.create({
+                                doc: content,
+                                extensions: [
+                                    basicSetup,
+                                    getLanguageExtension(filename),
+                                    EditorState.readOnly.of(true)
+                                ]
+                            }),
+                            parent: fileViewerElement
+                        });
+                    }
+                }
+            });
+        </script>
     </div>
 </body>
 </html>

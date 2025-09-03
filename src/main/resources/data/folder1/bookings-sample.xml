@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bookings>
+    <booking>
+        <customerName>Robert Johnson</customerName>
+        <amount>1250.00</amount>
+    </booking>
+    <booking>
+        <customerName>Maria Rodriguez</customerName>
+        <amount>875.50</amount>
+    </booking>
+    <booking>
+        <customerName>Kevin Lee</customerName>
+        <amount>423.75</amount>
+    </booking>
+    <booking>
+        <customerName>Jennifer Thompson</customerName>
+        <amount>689.25</amount>
+    </booking>
+    <booking>
+        <customerName>Michael Chen</customerName>
+        <amount>156.80</amount>
+    </booking>
+    <booking>
+        <customerName>Ashley Martinez</customerName>
+        <amount>934.60</amount>
+    </booking>
+    <booking>
+        <customerName>Daniel Kim</customerName>
+        <amount>267.90</amount>
+    </booking>
+    <booking>
+        <customerName>Rachel Adams</customerName>
+        <amount>445.20</amount>
+    </booking>
+    <booking>
+        <customerName>Steven Wong</customerName>
+        <amount>678.45</amount>
+    </booking>
+    <booking>
+        <customerName>Nicole Parker</customerName>
+        <amount>523.15</amount>
+    </booking>
+</bookings>

@@ -61,7 +61,7 @@ class FileUploadController(
                         }
                         "text" -> {
                             if (textContent.isNullOrBlank()) {
-                                throw IllegalArgumentException("Please enter CSV content")
+                                throw IllegalArgumentException("Please enter XML content")
                             }
                             bookingService.processBookingsFromText(textContent, sourceType)
                         }
@@ -76,7 +76,7 @@ class FileUploadController(
 
                     if (bookings.isEmpty()) {
                         logger.warn("No bookings processed from input mode: $inputMode")
-                        redirectAttributes.addFlashAttribute("error", "No valid booking data found. Please ensure the data contains comma-separated values (customerName,amount)")
+                        redirectAttributes.addFlashAttribute("error", "No valid booking data found. Please ensure the data contains valid XML format with booking elements")
                         redirectAttributes.addFlashAttribute("selectedSourceType", sourceType)
                         redirectAttributes.addFlashAttribute("selectedProcessingMode", processingMode)
                         return "redirect:/my-uploader/upload"
@@ -132,7 +132,7 @@ class FileUploadController(
             logger.error("Error processing data request - inputMode: $inputMode, sourceType: $sourceType, processingMode: $processingMode", e)
             val errorMessage = when {
                 e.message?.contains("not found") == true -> "Selected sample file not found. Please try a different file."
-                e.message?.contains("cannot be cast") == true -> "Invalid file format. Please upload a text file with comma-separated values."
+                e.message?.contains("cannot be cast") == true -> "Invalid file format. Please upload a valid XML file."
                 e.message?.contains("encoding") == true -> "File encoding issue. Please ensure the file is in UTF-8 format."
                 e is IllegalArgumentException -> e.message ?: "Invalid input provided"
                 else -> "Error processing data: ${e.message ?: "Unknown error occurred"}"

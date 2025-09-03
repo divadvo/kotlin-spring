@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bookings>
+    <booking>
+        <customerName>John Smith</customerName>
+        <amount>250.75</amount>
+    </booking>
+    <booking>
+        <customerName>Jane Doe</customerName>
+        <amount>189.50</amount>
+    </booking>
+    <booking>
+        <customerName>Mike Johnson</customerName>
+        <amount>345.25</amount>
+    </booking>
+    <booking>
+        <customerName>Sarah Wilson</customerName>
+        <amount>125.00</amount>
+    </booking>
+    <booking>
+        <customerName>David Brown</customerName>
+        <amount>467.80</amount>
+    </booking>
+    <booking>
+        <customerName>Lisa Garcia</customerName>
+        <amount>89.99</amount>
+    </booking>
+    <booking>
+        <customerName>Tom Anderson</customerName>
+        <amount>234.15</amount>
+    </booking>
+</bookings>

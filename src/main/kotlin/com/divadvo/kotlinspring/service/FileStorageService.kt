@@ -65,7 +65,7 @@ class FileStorageService(
             "text" -> "${timestamp}_text-input.txt"
             "predefined" -> {
                 val originalName = predefinedFile ?: "sample"
-                val extension = if (originalName.contains(".")) originalName.substringAfterLast(".") else "csv"
+                val extension = if (originalName.contains(".")) originalName.substringAfterLast(".") else "xml"
                 val baseName = if (originalName.contains(".")) originalName.substringBeforeLast(".").replace("/", "_") else originalName
                 "${timestamp}_${baseName}.${extension}"
             }

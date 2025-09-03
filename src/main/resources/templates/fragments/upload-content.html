@@ -49,9 +49,9 @@
 
                 <!-- Mode 2: Text Area -->
                 <div class="mb-3" id="textInputSection" style="display: none;">
-                    <label for="textContent" class="form-label">CSV Content</label>
+                    <label for="textContent" class="form-label">XML Content</label>
                     <textarea class="form-control" id="textContent" name="textContent" rows="8" 
-                              placeholder="Enter CSV data (customerName,amount):&#10;John Smith,250.75&#10;Jane Doe,189.50&#10;Mike Johnson,345.25"
+                              placeholder="Enter XML data:&#10;&lt;bookings&gt;&#10;&lt;booking&gt;&lt;customerName&gt;John Smith&lt;/customerName&gt;&lt;amount&gt;250.75&lt;/amount&gt;&lt;/booking&gt;&#10;&lt;booking&gt;&lt;customerName&gt;Jane Doe&lt;/customerName&gt;&lt;amount&gt;189.50&lt;/amount&gt;&lt;/booking&gt;&#10;&lt;/bookings&gt;"
                               th:text="${preservedTextContent}"></textarea>
                 </div>
 
@@ -255,11 +255,11 @@
                             const textContent = document.getElementById('textContent');
                             if (!textContent.value.trim()) {
                                 isValid = false;
-                                errorMessage = 'Please enter CSV content.';
+                                errorMessage = 'Please enter XML content.';
                                 showFieldError(textContent, errorMessage);
-                            } else if (!validateCSVFormat(textContent.value)) {
+                            } else if (!validateXMLFormat(textContent.value)) {
                                 isValid = false;
-                                errorMessage = 'Please enter valid CSV format (customerName,amount).';
+                                errorMessage = 'Please enter valid XML format with bookings structure.';
                                 showFieldError(textContent, errorMessage);
                             }
                             break;
@@ -306,14 +306,46 @@
                     field.parentNode.appendChild(errorDiv);
                 }
                 
-                function validateCSVFormat(text) {
-                    const lines = text.trim().split('\n').filter(line => line.trim());
-                    if (lines.length === 0) return false;
-                    
-                    return lines.every(line => {
-                        const parts = line.split(',');
-                        return parts.length >= 2 && parts[0].trim() && !isNaN(parseFloat(parts[1].trim()));
-                    });
+                function validateXMLFormat(text) {
+                    try {
+                        const parser = new DOMParser();
+                        const xmlDoc = parser.parseFromString(text.trim(), "text/xml");
+                        
+                        // Check for parsing errors
+                        const parserError = xmlDoc.getElementsByTagName("parsererror");
+                        if (parserError.length > 0) {
+                            return false;
+                        }
+                        
+                        // Check for bookings root element
+                        const bookingsElement = xmlDoc.getElementsByTagName("bookings")[0];
+                        if (!bookingsElement) {
+                            return false;
+                        }
+                        
+                        // Check for at least one booking element
+                        const bookingElements = xmlDoc.getElementsByTagName("booking");
+                        if (bookingElements.length === 0) {
+                            return false;
+                        }
+                        
+                        // Validate each booking has customerName and amount
+                        for (let i = 0; i < bookingElements.length; i++) {
+                            const booking = bookingElements[i];
+                            const customerName = booking.getElementsByTagName("customerName")[0];
+                            const amount = booking.getElementsByTagName("amount")[0];
+                            
+                            if (!customerName || !amount || 
+                                !customerName.textContent.trim() || 
+                                isNaN(parseFloat(amount.textContent.trim()))) {
+                                return false;
+                            }
+                        }
+                        
+                        return true;
+                    } catch (e) {
+                        return false;
+                    }
                 }
                 
                 function initializeMode() {

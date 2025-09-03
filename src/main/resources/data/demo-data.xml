@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bookings>
+    <booking>
+        <customerName>Alex Turner</customerName>
+        <amount>99.99</amount>
+    </booking>
+    <booking>
+        <customerName>Sophie Clarke</customerName>
+        <amount>1500.00</amount>
+    </booking>
+    <booking>
+        <customerName>James Wilson</customerName>
+        <amount>750.25</amount>
+    </booking>
+    <booking>
+        <customerName>Emma Watson</customerName>
+        <amount>320.80</amount>
+    </booking>
+    <booking>
+        <customerName>Oliver Smith</customerName>
+        <amount>445.60</amount>
+    </booking>
+    <booking>
+        <customerName>Isabella Brown</customerName>
+        <amount>235.45</amount>
+    </booking>
+    <booking>
+        <customerName>William Jones</customerName>
+        <amount>867.30</amount>
+    </booking>
+    <booking>
+        <customerName>Mia Davis</customerName>
+        <amount>156.70</amount>
+    </booking>
+    <booking>
+        <customerName>Benjamin Miller</customerName>
+        <amount>623.85</amount>
+    </booking>
+    <booking>
+        <customerName>Charlotte Wilson</customerName>
+        <amount>789.15</amount>
+    </booking>
+</bookings>

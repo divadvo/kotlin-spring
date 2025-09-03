@@ -5,6 +5,7 @@ import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
+import org.springframework.web.servlet.mvc.support.RedirectAttributes
 
 @Controller
 class FileUploadController(
@@ -22,28 +23,28 @@ class FileUploadController(
     fun handleFileUpload(
         @RequestParam("file") file: MultipartFile,
         @RequestParam("sourceType") sourceType: SourceType,
-        model: Model
+        redirectAttributes: RedirectAttributes
     ): String {
         return if (!file.isEmpty) {
             try {
                 val bookings = bookingService.processBookings(file, sourceType)
                 val bookingsJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(bookings)
                 
-                model.addAttribute("bookings", bookings)
-                model.addAttribute("bookingsJson", bookingsJson)
-                model.addAttribute("fileName", file.originalFilename)
-                model.addAttribute("selectedSourceType", sourceType)
-                model.addAttribute("sourceTypes", SourceType.values())
-                "upload"
+                redirectAttributes.addFlashAttribute("bookings", bookings)
+                redirectAttributes.addFlashAttribute("bookingsJson", bookingsJson)
+                redirectAttributes.addFlashAttribute("fileName", file.originalFilename)
+                redirectAttributes.addFlashAttribute("selectedSourceType", sourceType)
+                redirectAttributes.addFlashAttribute("success", true)
+                
+                "redirect:/upload"
             } catch (e: Exception) {
-                model.addAttribute("error", "Error processing file: ${e.message}")
-                model.addAttribute("sourceTypes", SourceType.values())
-                "upload"
+                redirectAttributes.addFlashAttribute("error", "Error processing file: ${e.message}")
+                redirectAttributes.addFlashAttribute("selectedSourceType", sourceType)
+                "redirect:/upload"
             }
         } else {
-            model.addAttribute("error", "Please select a file to upload")
-            model.addAttribute("sourceTypes", SourceType.values())
-            "upload"
+            redirectAttributes.addFlashAttribute("error", "Please select a file to upload")
+            "redirect:/upload"
         }
     }
 }

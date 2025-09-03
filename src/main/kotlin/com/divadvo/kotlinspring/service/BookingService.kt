@@ -1,9 +1,11 @@
 package com.divadvo.kotlinspring.service
 
 import com.divadvo.kotlinspring.model.domain.Booking
+import com.divadvo.kotlinspring.model.dto.PredefinedFile
 import com.divadvo.kotlinspring.model.enums.SourceType
 import org.slf4j.LoggerFactory
 import org.springframework.core.io.ClassPathResource
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import java.time.LocalDateTime
@@ -81,5 +83,43 @@ class BookingService {
 
         logger.debug("Parsed $validLines valid bookings, $invalidLines invalid lines")
         return bookings
+    }
+    
+    fun getPredefinedFiles(): List<PredefinedFile> {
+        return try {
+            val resolver = PathMatchingResourcePatternResolver()
+            val resources = resolver.getResources("classpath:data/*.csv")
+            
+            resources.mapNotNull { resource ->
+                try {
+                    val filename = resource.filename
+                    if (filename != null) {
+                        val content = resource.inputStream.bufferedReader().readText()
+                        val lineCount = content.lines().count { it.isNotBlank() }
+                        
+                        PredefinedFile(
+                            filename = filename,
+                            displayName = generateDisplayName(filename),
+                            recordCount = lineCount
+                        )
+                    } else null
+                } catch (e: Exception) {
+                    logger.warn("Error reading predefined file: ${resource.filename}", e)
+                    null
+                }
+            }.sortedBy { it.displayName }
+        } catch (e: Exception) {
+            logger.error("Error loading predefined files", e)
+            emptyList()
+        }
+    }
+    
+    private fun generateDisplayName(filename: String): String {
+        val nameWithoutExtension = filename.substringBeforeLast(".")
+        return nameWithoutExtension
+            .split("-", "_")
+            .joinToString(" ") { word ->
+                word.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+            }
     }
 }

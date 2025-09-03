@@ -5,7 +5,6 @@ import com.divadvo.kotlinspring.model.dto.PredefinedFile
 import com.divadvo.kotlinspring.model.enums.SourceType
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.LoggerFactory
-import org.springframework.core.io.support.PathMatchingResourcePatternResolver
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
@@ -30,44 +29,10 @@ class FileUploadController(
 
     private fun addCommonAttributes(model: Model) {
         model.addAttribute("sourceTypes", SourceType.values())
-        model.addAttribute("predefinedFiles", getPredefinedFiles())
+        model.addAttribute("predefinedFiles", bookingService.getPredefinedFiles())
     }
 
-    private fun getPredefinedFiles(): List<PredefinedFile> {
-        return try {
-            val resolver = PathMatchingResourcePatternResolver()
-            val resources = resolver.getResources("classpath:data/*.csv")
 
-            resources.mapNotNull { resource ->
-                try {
-                    val filename = resource.filename
-                    if (filename != null) {
-                        val content = resource.inputStream.bufferedReader().readText()
-                        val lineCount = content.lines().count { it.isNotBlank() }
-
-                        PredefinedFile(
-                            filename = filename,
-                            displayName = generateDisplayName(filename),
-                            recordCount = lineCount
-                        )
-                    } else null
-                } catch (e: Exception) {
-                    null
-                }
-            }.sortedBy { it.displayName }
-        } catch (e: Exception) {
-            emptyList()
-        }
-    }
-
-    private fun generateDisplayName(filename: String): String {
-        val nameWithoutExtension = filename.substringBeforeLast(".")
-        return nameWithoutExtension
-            .split("-", "_")
-            .joinToString(" ") { word ->
-                word.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
-            }
-    }
 
     @PostMapping(value = ["/my-uploader/upload", "/my-uploader/upload/"])
     fun handleDataProcessing(
@@ -116,7 +81,7 @@ class FileUploadController(
             redirectAttributes.addFlashAttribute("bookingsJson", bookingsJson)
             redirectAttributes.addFlashAttribute("selectedSourceType", sourceType)
             redirectAttributes.addFlashAttribute("selectedInputMode", inputMode)
-            redirectAttributes.addFlashAttribute("predefinedFiles", getPredefinedFiles())
+            redirectAttributes.addFlashAttribute("predefinedFiles", bookingService.getPredefinedFiles())
             redirectAttributes.addFlashAttribute("sourceTypes", SourceType.values())
             redirectAttributes.addFlashAttribute("success", true)
 
@@ -150,7 +115,7 @@ class FileUploadController(
             redirectAttributes.addFlashAttribute("error", errorMessage)
             redirectAttributes.addFlashAttribute("selectedSourceType", sourceType)
             redirectAttributes.addFlashAttribute("selectedInputMode", inputMode)
-            redirectAttributes.addFlashAttribute("predefinedFiles", getPredefinedFiles())
+            redirectAttributes.addFlashAttribute("predefinedFiles", bookingService.getPredefinedFiles())
             redirectAttributes.addFlashAttribute("sourceTypes", SourceType.values())
 
             // Preserve form data on error too

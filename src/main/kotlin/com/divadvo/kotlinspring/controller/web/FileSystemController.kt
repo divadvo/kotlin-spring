@@ -50,15 +50,4 @@ class FileSystemController(
         return "view"
     }
 
-    @GetMapping(value = ["/my-uploader/logs", "/my-uploader/logs/"])
-    fun logs(model: Model): String {
-        logger.info("Accessing Logs page")
-        return "logs"
-    }
-
-    @GetMapping(value = ["/my-uploader/db", "/my-uploader/db/"])
-    fun db(model: Model): String {
-        logger.info("Accessing DB Viewer page")
-        return "db"
-    }
 }

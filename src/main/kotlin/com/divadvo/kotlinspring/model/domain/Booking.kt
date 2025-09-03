@@ -1,5 +1,6 @@
-package com.divadvo.kotlinspring
+package com.divadvo.kotlinspring.model.domain
 
+import com.divadvo.kotlinspring.model.enums.SourceType
 import java.time.LocalDateTime
 
 data class Booking(

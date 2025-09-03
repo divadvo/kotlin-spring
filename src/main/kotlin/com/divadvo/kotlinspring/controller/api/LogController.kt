@@ -1,24 +1,30 @@
-package com.divadvo.kotlinspring
+package com.divadvo.kotlinspring.controller.api
 
+import com.divadvo.kotlinspring.model.dto.LogEntry
+import com.divadvo.kotlinspring.model.dto.LogResponse
 import org.slf4j.LoggerFactory
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RestController
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.time.LocalDateTime
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.regex.Pattern
 
 @RestController
 @RequestMapping("/api/logs")
 class LogController {
-    
+
     private val logger = LoggerFactory.getLogger(LogController::class.java)
     private val logFile = File("logs/application.log")
     private val logPattern = Pattern.compile(
         """^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}) \[([^\]]+)\] (\w+)\s+([^\s]+) - (.*)$"""
     )
-    
+
     @GetMapping
     fun getLogs(
         @RequestParam(defaultValue = "100") lines: Int,
@@ -30,22 +36,22 @@ class LogController {
                 logger.warn("Log file does not exist: ${logFile.absolutePath}")
                 return LogResponse(emptyList(), 0, 0)
             }
-            
+
             val allLines = Files.readAllLines(Paths.get(logFile.absolutePath))
             val entries = mutableListOf<LogEntry>()
-            
+
             val filteredLines = if (since != null) {
                 allLines.filter { line ->
                     val entry = parseLogLine(line)
                     entry != null && entry.timestamp.isAfter(
-                        LocalDateTime.ofEpochSecond(since / 1000, ((since % 1000) * 1_000_000).toInt(), 
-                        java.time.ZoneOffset.UTC)
+                        LocalDateTime.ofEpochSecond(since / 1000, ((since % 1000) * 1_000_000).toInt(),
+                        ZoneOffset.UTC)
                     )
                 }
             } else {
                 allLines.takeLast(lines)
             }
-            
+
             for (line in filteredLines) {
                 val entry = parseLogLine(line)
                 if (entry != null) {
@@ -54,7 +60,7 @@ class LogController {
                     }
                 }
             }
-            
+
             LogResponse(
                 entries = entries.takeLast(lines),
                 totalLines = allLines.size.toLong(),
@@ -65,7 +71,7 @@ class LogController {
             LogResponse(emptyList(), 0, 0)
         }
     }
-    
+
     @GetMapping("/tail")
     fun tailLogs(
         @RequestParam(defaultValue = "50") lines: Int,
@@ -75,24 +81,24 @@ class LogController {
             if (!logFile.exists()) {
                 return LogResponse(emptyList(), 0, 0)
             }
-            
+
             val currentLastModified = logFile.lastModified()
-            
+
             // If file hasn't changed, return empty response
             if (lastModified != null && currentLastModified <= lastModified) {
                 return LogResponse(emptyList(), 0, currentLastModified)
             }
-            
+
             val allLines = Files.readAllLines(Paths.get(logFile.absolutePath))
             val entries = mutableListOf<LogEntry>()
-            
+
             for (line in allLines.takeLast(lines)) {
                 val entry = parseLogLine(line)
                 if (entry != null) {
                     entries.add(entry)
                 }
             }
-            
+
             LogResponse(
                 entries = entries,
                 totalLines = allLines.size.toLong(),
@@ -103,13 +109,13 @@ class LogController {
             LogResponse(emptyList(), 0, System.currentTimeMillis())
         }
     }
-    
+
     private fun parseLogLine(line: String): LogEntry? {
         val matcher = logPattern.matcher(line)
         return if (matcher.matches()) {
             try {
                 val timestamp = LocalDateTime.parse(
-                    matcher.group(1), 
+                    matcher.group(1),
                     DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")
                 )
                 LogEntry(

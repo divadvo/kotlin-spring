@@ -1,4 +1,4 @@
-package com.divadvo.kotlinspring
+package com.divadvo.kotlinspring.model.dto
 
 import java.time.LocalDateTime
 

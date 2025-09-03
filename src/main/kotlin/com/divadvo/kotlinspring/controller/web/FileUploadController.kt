@@ -1,11 +1,16 @@
-package com.divadvo.kotlinspring
+package com.divadvo.kotlinspring.controller.web
 
+import com.divadvo.kotlinspring.service.BookingService
+import com.divadvo.kotlinspring.model.dto.PredefinedFile
+import com.divadvo.kotlinspring.model.enums.SourceType
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.LoggerFactory
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.servlet.mvc.support.RedirectAttributes
 
@@ -14,7 +19,7 @@ class FileUploadController(
     private val bookingService: BookingService,
     private val objectMapper: ObjectMapper
 ) {
-    
+
     private val logger = LoggerFactory.getLogger(FileUploadController::class.java)
 
     @GetMapping("/my-uploader/upload")
@@ -22,24 +27,24 @@ class FileUploadController(
         addCommonAttributes(model)
         return "upload"
     }
-    
+
     private fun addCommonAttributes(model: Model) {
         model.addAttribute("sourceTypes", SourceType.values())
         model.addAttribute("predefinedFiles", getPredefinedFiles())
     }
-    
+
     private fun getPredefinedFiles(): List<PredefinedFile> {
         return try {
             val resolver = PathMatchingResourcePatternResolver()
             val resources = resolver.getResources("classpath:data/*.csv")
-            
+
             resources.mapNotNull { resource ->
                 try {
                     val filename = resource.filename
                     if (filename != null) {
                         val content = resource.inputStream.bufferedReader().readText()
                         val lineCount = content.lines().count { it.isNotBlank() }
-                        
+
                         PredefinedFile(
                             filename = filename,
                             displayName = generateDisplayName(filename),
@@ -54,7 +59,7 @@ class FileUploadController(
             emptyList()
         }
     }
-    
+
     private fun generateDisplayName(filename: String): String {
         val nameWithoutExtension = filename.substringBeforeLast(".")
         return nameWithoutExtension
@@ -96,17 +101,17 @@ class FileUploadController(
                 }
                 else -> throw IllegalArgumentException("Invalid input mode selected")
             }
-            
+
             if (bookings.isEmpty()) {
                 logger.warn("No bookings processed from input mode: $inputMode")
                 redirectAttributes.addFlashAttribute("error", "No valid booking data found. Please ensure the data contains comma-separated values (customerName,amount)")
                 redirectAttributes.addFlashAttribute("selectedSourceType", sourceType)
                 return "redirect:/upload"
             }
-            
+
             logger.info("Successfully processed ${bookings.size} bookings from $inputMode")
             val bookingsJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(bookings)
-            
+
             redirectAttributes.addFlashAttribute("bookings", bookings)
             redirectAttributes.addFlashAttribute("bookingsJson", bookingsJson)
             redirectAttributes.addFlashAttribute("selectedSourceType", sourceType)
@@ -114,13 +119,13 @@ class FileUploadController(
             redirectAttributes.addFlashAttribute("predefinedFiles", getPredefinedFiles())
             redirectAttributes.addFlashAttribute("sourceTypes", SourceType.values())
             redirectAttributes.addFlashAttribute("success", true)
-            
+
             // Preserve form data based on input mode
             when (inputMode) {
                 "text" -> redirectAttributes.addFlashAttribute("preservedTextContent", textContent)
                 "predefined" -> redirectAttributes.addFlashAttribute("selectedPredefinedFile", predefinedFile)
             }
-            
+
             // Set source description based on input mode
             val sourceDescription = when (inputMode) {
                 "file" -> file?.originalFilename ?: "uploaded file"
@@ -129,9 +134,9 @@ class FileUploadController(
                 else -> "unknown source"
             }
             redirectAttributes.addFlashAttribute("sourceDescription", sourceDescription)
-            
+
             return "redirect:/upload"
-            
+
         } catch (e: Exception) {
             logger.error("Error processing data request - inputMode: $inputMode, sourceType: $sourceType", e)
             val errorMessage = when {
@@ -141,19 +146,19 @@ class FileUploadController(
                 e is IllegalArgumentException -> e.message ?: "Invalid input provided"
                 else -> "Error processing data: ${e.message ?: "Unknown error occurred"}"
             }
-            
+
             redirectAttributes.addFlashAttribute("error", errorMessage)
             redirectAttributes.addFlashAttribute("selectedSourceType", sourceType)
             redirectAttributes.addFlashAttribute("selectedInputMode", inputMode)
             redirectAttributes.addFlashAttribute("predefinedFiles", getPredefinedFiles())
             redirectAttributes.addFlashAttribute("sourceTypes", SourceType.values())
-            
+
             // Preserve form data on error too
             when (inputMode) {
                 "text" -> redirectAttributes.addFlashAttribute("preservedTextContent", textContent)
                 "predefined" -> redirectAttributes.addFlashAttribute("selectedPredefinedFile", predefinedFile)
             }
-            
+
             return "redirect:/upload"
         }
     }

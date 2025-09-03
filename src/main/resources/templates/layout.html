@@ -15,9 +15,15 @@
         <div class="row">
             <!-- Main Content Section -->
             <div class="col-lg-6">
-                <div th:replace="~{fragments/upload-content :: content}" th:if="${activePage == 'upload'}"></div>
-                <div th:replace="~{fragments/view-content :: content}" th:if="${activePage == 'view'}"></div>
-                <div th:replace="~{fragments/browse-content :: content}" th:if="${activePage == 'browse'}"></div>
+                <th:block th:if="${activePage == 'upload'}">
+                    <div th:replace="~{fragments/upload-content :: content}"></div>
+                </th:block>
+                <th:block th:if="${activePage == 'view'}">
+                    <div th:replace="~{fragments/view-content :: content}"></div>
+                </th:block>
+                <th:block th:if="${activePage == 'browse'}">
+                    <div th:replace="~{fragments/browse-content :: content}"></div>
+                </th:block>
             </div>
             
             <!-- Log Viewer Section -->

@@ -30,17 +30,17 @@ class BookingService {
         return result
     }
 
-    fun processBookingsFromPredefinedFile(fileName: String, sourceType: SourceType): List<Booking> {
-        logger.info("Processing bookings from predefined file: $fileName, sourceType: $sourceType")
-        val resource = ClassPathResource("data/$fileName")
+    fun processBookingsFromPredefinedFile(relativePath: String, sourceType: SourceType): List<Booking> {
+        logger.info("Processing bookings from predefined file: $relativePath, sourceType: $sourceType")
+        val resource = ClassPathResource("data/$relativePath")
         if (!resource.exists()) {
-            logger.error("Predefined file not found: data/$fileName")
-            throw IllegalArgumentException("Predefined file '$fileName' not found")
+            logger.error("Predefined file not found: data/$relativePath")
+            throw IllegalArgumentException("Predefined file '$relativePath' not found")
         }
 
         val content = resource.inputStream.bufferedReader().readText()
         val result = parseCSVContent(content, sourceType)
-        logger.info("Successfully processed ${result.size} bookings from predefined file: $fileName")
+        logger.info("Successfully processed ${result.size} bookings from predefined file: $relativePath")
         return result
     }
 
@@ -88,18 +88,28 @@ class BookingService {
     fun getPredefinedFiles(): List<PredefinedFile> {
         return try {
             val resolver = PathMatchingResourcePatternResolver()
-            val resources = resolver.getResources("classpath:data/*.csv")
+            val resources = resolver.getResources("classpath:data/**/*.csv")
             
             resources.mapNotNull { resource ->
                 try {
                     val filename = resource.filename
+                    val uri = resource.uri.toString()
+                    
                     if (filename != null) {
+                        // Extract relative path from the URI (everything after "data/")
+                        val relativePath = if (uri.contains("data/")) {
+                            uri.substringAfter("data/")
+                        } else {
+                            filename
+                        }
+                        
                         val content = resource.inputStream.bufferedReader().readText()
                         val lineCount = content.lines().count { it.isNotBlank() }
                         
                         PredefinedFile(
                             filename = filename,
-                            displayName = generateDisplayName(filename),
+                            relativePath = relativePath,
+                            displayName = generateDisplayName(relativePath),
                             recordCount = lineCount
                         )
                     } else null
@@ -114,12 +124,29 @@ class BookingService {
         }
     }
     
-    private fun generateDisplayName(filename: String): String {
-        val nameWithoutExtension = filename.substringBeforeLast(".")
-        return nameWithoutExtension
+    private fun generateDisplayName(relativePath: String): String {
+        val pathParts = relativePath.split("/")
+        val filename = pathParts.last().substringBeforeLast(".")
+        
+        // Generate display name for the file part
+        val fileDisplayName = filename
             .split("-", "_")
             .joinToString(" ") { word ->
                 word.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
             }
+        
+        // If there are folder parts, include them in the display name
+        return if (pathParts.size > 1) {
+            val folderParts = pathParts.dropLast(1)
+            val folderDisplayName = folderParts.joinToString(" / ") { folder ->
+                folder.split("-", "_")
+                    .joinToString(" ") { word ->
+                        word.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+                    }
+            }
+            "$folderDisplayName / $fileDisplayName"
+        } else {
+            fileDisplayName
+        }
     }
 }

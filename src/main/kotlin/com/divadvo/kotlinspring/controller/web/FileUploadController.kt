@@ -71,7 +71,7 @@ class FileUploadController(
                 logger.warn("No bookings processed from input mode: $inputMode")
                 redirectAttributes.addFlashAttribute("error", "No valid booking data found. Please ensure the data contains comma-separated values (customerName,amount)")
                 redirectAttributes.addFlashAttribute("selectedSourceType", sourceType)
-                return "redirect:/upload"
+                return "redirect:/my-uploader/upload"
             }
 
             logger.info("Successfully processed ${bookings.size} bookings from $inputMode")
@@ -100,7 +100,7 @@ class FileUploadController(
             }
             redirectAttributes.addFlashAttribute("sourceDescription", sourceDescription)
 
-            return "redirect:/upload"
+            return "redirect:/my-uploader/upload"
 
         } catch (e: Exception) {
             logger.error("Error processing data request - inputMode: $inputMode, sourceType: $sourceType", e)
@@ -124,7 +124,7 @@ class FileUploadController(
                 "predefined" -> redirectAttributes.addFlashAttribute("selectedPredefinedFile", predefinedFile)
             }
 
-            return "redirect:/upload"
+            return "redirect:/my-uploader/upload"
         }
     }
 }

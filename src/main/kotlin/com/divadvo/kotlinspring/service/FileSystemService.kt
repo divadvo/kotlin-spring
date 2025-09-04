@@ -15,7 +15,7 @@ class FileSystemService {
     private val logger = LoggerFactory.getLogger(FileSystemService::class.java)
     
     fun browseDirectory(path: String?): DirectoryBrowseResult {
-        val directoryPath = path ?: System.getProperty("user.home")
+        val directoryPath = path ?: File.listRoots().firstOrNull()?.absolutePath ?: "/"
         logger.info("Browsing directory: $directoryPath")
         
         return try {

@@ -24,7 +24,10 @@ class BookingTransformController(
     @PostMapping("/booking")
     @Operation(
         summary = "Transform XML to bookings (JSON input)",
-        description = "Accepts XML payload and source type as JSON request body, returns list of parsed bookings"
+        description = """Accepts XML payload and source type as JSON request body, returns list of parsed bookings.
+        
+IMPORTANT: Since this endpoint accepts JSON, any quotes within the XML must be escaped with backslashes (\\").
+If you want to avoid JSON escaping, use the form endpoint instead (/api/transform/booking/form)."""
     )
     @ApiResponses(
         ApiResponse(
@@ -47,13 +50,24 @@ class BookingTransformController(
             content = [Content(
                 mediaType = "application/json",
                 schema = Schema(implementation = BookingTransformRequest::class),
-                examples = [ExampleObject(
-                    name = "Sample booking XML",
-                    value = """{
-  "xmlPayload": "<bookings><booking><customerName>John Doe</customerName><amount>150.00</amount></booking><booking customerName=\"John Doe\" id=\"123\"></booking></bookings>",
+                examples = [
+                    ExampleObject(
+                        name = "Simple XML (no attributes)",
+                        description = "Basic XML without attributes - no escaping needed",
+                        value = """{
+  "xmlPayload": "<bookings><booking><customerName>John Doe</customerName><amount>150.00</amount></booking></bookings>",
   "sourceType": "A"
 }"""
-                )]
+                    ),
+                    ExampleObject(
+                        name = "XML with attributes",
+                        description = "XML with attributes - quotes must be escaped with backslashes",
+                        value = """{
+  "xmlPayload": "<bookings><booking customerName=\"Jane Smith\" id=\"456\"><amount>200.00</amount></booking></bookings>",
+  "sourceType": "B"
+}"""
+                    )
+                ]
             )]
         )
         request: BookingTransformRequest
@@ -64,7 +78,9 @@ class BookingTransformController(
     @PostMapping("/booking/form")
     @Operation(
         summary = "Transform XML to bookings (form input)",
-        description = "Accepts XML payload and source type as form parameters, returns list of parsed bookings"
+        description = """Accepts XML payload and source type as form parameters, returns list of parsed bookings.
+
+No JSON escaping required! You can paste XML with quotes directly into the form fields."""
     )
     @ApiResponses(
         ApiResponse(
@@ -82,8 +98,18 @@ class BookingTransformController(
     )
     fun transformBookingsForm(
         @Parameter(
-            description = "XML payload containing booking data",
-            example = "<bookings><booking><customerName>Jane Smith</customerName><amount>200.00</amount></booking></bookings>"
+            description = """XML payload containing booking data. 
+            
+No escaping needed - paste XML with quotes directly!""",
+            example = """<bookings>
+  <booking customerName="Jane Smith" id="789">
+    <amount>200.00</amount>
+  </booking>
+  <booking>
+    <customerName>Mike Davis</customerName>
+    <amount>350.25</amount>
+  </booking>
+</bookings>"""
         )
         @RequestParam xmlPayload: String,
         

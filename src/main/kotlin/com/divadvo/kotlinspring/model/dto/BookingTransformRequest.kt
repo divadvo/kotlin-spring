@@ -6,7 +6,8 @@ import io.swagger.v3.oas.annotations.media.Schema
 @Schema(description = "Request for transforming XML content to booking list")
 data class BookingTransformRequest(
     @Schema(
-        description = "XML payload containing booking data",
+        description = """XML payload containing booking data. 
+    IMPORTANT: Quotes within the XML must be escaped with backslashes.""",
         example = """<bookings>
   <booking>
     <customerName>John Doe</customerName>

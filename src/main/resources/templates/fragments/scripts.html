@@ -48,7 +48,7 @@
                 }
             }
             
-            function copyJson() {
+            function copyJson(event) {
                 if (editor) {
                     const json = JSON.stringify(editor.get(), null, 2);
                     navigator.clipboard.writeText(json).then(function() {

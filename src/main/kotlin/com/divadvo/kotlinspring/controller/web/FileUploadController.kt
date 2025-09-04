@@ -7,6 +7,7 @@ import com.divadvo.kotlinspring.model.enums.SourceType
 import com.divadvo.kotlinspring.model.enums.ProcessingMode
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.LoggerFactory
+import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
@@ -16,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.servlet.mvc.support.RedirectAttributes
 
 @Controller
+@Profile("!prod")
 class FileUploadController(
     private val bookingService: BookingService,
     private val fileStorageService: FileStorageService,

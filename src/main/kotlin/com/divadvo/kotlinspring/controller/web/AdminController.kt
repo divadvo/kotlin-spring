@@ -1,11 +1,13 @@
 package com.divadvo.kotlinspring.controller.web
 
 import org.slf4j.LoggerFactory
+import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
 
 @Controller
+@Profile("!prod")
 class AdminController {
 
     private val logger = LoggerFactory.getLogger(AdminController::class.java)

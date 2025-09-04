@@ -4,12 +4,14 @@ import com.divadvo.kotlinspring.model.dto.DirectoryBrowseResult
 import com.divadvo.kotlinspring.model.dto.FileReadResult
 import com.divadvo.kotlinspring.service.FileSystemService
 import org.slf4j.LoggerFactory
+import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestParam
 
 @Controller
+@Profile("!prod")
 class FileSystemController(
     private val fileSystemService: FileSystemService
 ) {

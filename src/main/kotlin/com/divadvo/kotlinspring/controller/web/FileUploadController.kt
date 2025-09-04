@@ -78,7 +78,7 @@ class FileUploadController(
 
                     if (bookings.isEmpty()) {
                         logger.warn("No bookings processed from input mode: $inputMode")
-                        redirectAttributes.addFlashAttribute("error", "No valid booking data found. Please ensure the data contains valid XML format with booking elements")
+                        redirectAttributes.addFlashAttribute("error", "No valid input data found. Please ensure the data contains valid XML for our application")
                         redirectAttributes.addFlashAttribute("selectedSourceType", sourceType)
                         redirectAttributes.addFlashAttribute("selectedProcessingMode", processingMode)
                         return "redirect:/my-uploader/upload"

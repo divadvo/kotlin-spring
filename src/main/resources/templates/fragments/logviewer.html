@@ -53,6 +53,25 @@
             
             <!-- Log Display -->
             <div class="position-relative">
+                <style>
+                    .processing-start-highlight {
+                        background-color: #ffc107 !important;
+                        color: #000 !important;
+                        border-left: 4px solid #ff8c00 !important;
+                        padding-left: 8px !important;
+                        margin: 2px 0 !important;
+                        border-radius: 3px !important;
+                        font-weight: bold !important;
+                        box-shadow: 0 0 5px rgba(255, 193, 7, 0.3) !important;
+                        animation: pulse-highlight 2s ease-in-out !important;
+                    }
+                    
+                    @keyframes pulse-highlight {
+                        0% { box-shadow: 0 0 5px rgba(255, 193, 7, 0.6); }
+                        50% { box-shadow: 0 0 15px rgba(255, 193, 7, 0.4); }
+                        100% { box-shadow: 0 0 5px rgba(255, 193, 7, 0.3); }
+                    }
+                </style>
                 <pre id="logDisplay" class="log-container mb-0 p-3" style="height: 600px; overflow-y: auto; background-color: #1e1e1e; color: #d4d4d4; font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.2;"></pre>
             </div>
         </div>

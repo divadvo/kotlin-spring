@@ -250,14 +250,29 @@
                             break;
                     }
                     
+                    // Check if this is a processing start message
+                    const isProcessingStart = this.isProcessingStartMessage(entry.message);
+                    
                     const timestamp = new Date(entry.timestamp).toLocaleString();
                     
-                    line.innerHTML = `<span style="color: #888;">${timestamp}</span> ` +
-                        `<span style="color: ${color}; font-weight: bold;">[${entry.level}]</span> ` +
-                        `<span style="color: #888;">${entry.logger}</span> - ` +
-                        `<span style="color: #d4d4d4;">${this.escapeHtml(entry.message)}</span>`;
+                    if (isProcessingStart) {
+                        line.className = 'processing-start-highlight';
+                        line.innerHTML = `<span style="color: #000; font-weight: bold;">📤 ${timestamp}</span> ` +
+                            `<span style="color: #000; font-weight: bold;">[${entry.level}]</span> ` +
+                            `<span style="color: #000; font-weight: bold;">${entry.logger}</span> - ` +
+                            `<span style="color: #000; font-weight: bold;">${this.escapeHtml(entry.message)}</span>`;
+                    } else {
+                        line.innerHTML = `<span style="color: #888;">${timestamp}</span> ` +
+                            `<span style="color: ${color}; font-weight: bold;">[${entry.level}]</span> ` +
+                            `<span style="color: #888;">${entry.logger}</span> - ` +
+                            `<span style="color: #d4d4d4;">${this.escapeHtml(entry.message)}</span>`;
+                    }
                     
                     return line;
+                },
+                
+                isProcessingStartMessage: function(message) {
+                    return message && message.includes('Processing data request - inputMode:');
                 },
                 
                 limitDisplayedLines: function(logDisplay) {
